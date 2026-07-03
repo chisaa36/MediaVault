@@ -22,19 +22,17 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS games (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT,
-				genre TEXT,
 				status TEXT,
 				user_rating REAL,
 				developer TEXT,
 				avg_playtime_mins INTEGER
 			)""");
 			
-			// create music table
+			// create songs table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS music (
+				CREATE TABLE IF NOT EXISTS songs (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT,
-				genre TEXT,
 				status TEXT,
 				user_rating REAL,
 				artist TEXT,
@@ -42,12 +40,11 @@ public class DatabaseInitializer {
 				runtime_mins INTEGER
 			)""");
 			
-			// create series table
+			// create shows table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS series (
+				CREATE TABLE IF NOT EXISTS shows (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT,
-				genre TEXT,
 				status TEXT,
 				user_rating REAL
 			)""");
@@ -56,11 +53,11 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS seasons (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				series_id INTEGER NOT NULL,
+				shows_id INTEGER NOT NULL,
 				title TEXT,
 				status TEXT,
 				
-				FOREIGN KEY (series_id) REFERENCES series(id)
+				FOREIGN KEY (shows_id) REFERENCES shows(id)
 			)""");
 			
 			// create episodes table
@@ -70,7 +67,6 @@ public class DatabaseInitializer {
 				season_id INTEGER NOT NULL,
 				episode_number INTEGER NOT NULL,
 				title TEXT,
-				genre TEXT,
 				status TEXT,
 				user_rating REAL,
 							
@@ -87,9 +83,9 @@ public class DatabaseInitializer {
 				FOREIGN KEY (users_id) REFERENCES users(id)
 			)""");
 			
-			// create music_playlists table
+			// create songs_playlists table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS music_playlists (
+				CREATE TABLE IF NOT EXISTS songs_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
 				title TEXT,
@@ -98,9 +94,9 @@ public class DatabaseInitializer {
 				FOREIGN KEY (users_id) REFERENCES users(id)
 			)""");
 			
-			// create series_playlists table
+			// create shows_playlists table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS series_playlists (
+				CREATE TABLE IF NOT EXISTS shows_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
 				title TEXT,
@@ -118,24 +114,61 @@ public class DatabaseInitializer {
 				FOREIGN KEY (game_id) REFERENCES games(id)
 			)""");
 			
-			// create music_lists table
+			// create songs_lists table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS music_lists (
+				CREATE TABLE IF NOT EXISTS songs_lists (
 				playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
-				music_id INTEGER NOT NULL,
+				songs_id INTEGER NOT NULL,
 				
-				FOREIGN KEY (playlist_id) REFERENCES music_playlists(id),
-				FOREIGN KEY (music_id) REFERENCES music(id)
+				FOREIGN KEY (playlist_id) REFERENCES songs_playlists(id),
+				FOREIGN KEY (songs_id) REFERENCES songs(id)
  			)""");
 			
-			// create series_lists table
+			// create shows_lists table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS series_lists (
+				CREATE TABLE IF NOT EXISTS shows_lists (
 				playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
-				series_id INTEGER NOT NULL,
+				shows_id INTEGER NOT NULL,
 				
-				FOREIGN KEY (playlist_id) REFERENCES series_playlists(id),
-				FOREIGN KEY (series_id) REFERENCES series(id)
+				FOREIGN KEY (playlist_id) REFERENCES shows_playlists(id),
+				FOREIGN KEY (shows_id) REFERENCES shows(id)
+			)""");
+			
+			// create genres table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS genres (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				genre TEXT NOT NULL UNIQUE,
+			)""");
+			
+			// create game_genres table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS game_genres (
+				game_id INTEGER PRIMARY KEY NOT NULL,
+				genre_id INTEGER PRIMARY KEY NOT NULL,
+				
+				FOREIGN KEY (game_id) REFERENCES games(id),
+				FOREIGN KEY (genre_id) REFERENCES genre(id)
+			)""");
+			
+			// create songs_genres table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS songs_genres (
+				songs_id INTEGER PRIMARY KEY NOT NULL,
+				genre_id INTEGER PRIMARY KEY NOT NULL,
+				
+				FOREIGN KEY (songs_id) REFERENCES songs(id),
+				FOREIGN KEY (genre_id) REFERENCES genre(id)
+			)""");
+			
+			// create shows_genres table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS shows_genres (
+				shows_id INTEGER PRIMARY KEY NOT NULL,
+				genre_id INTEGER PRIMARY KEY NOT NULL,
+				
+				FOREIGN KEY (shows_id) REFERENCES shows(id),
+				FOREIGN KEY (genre_id) REFERENCES genre(id)
 			)""");
 		}
 	}
