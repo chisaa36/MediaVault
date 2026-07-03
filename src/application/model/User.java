@@ -7,13 +7,13 @@ public class User {
 	
 	public String username;
 	
-	public ShowList completedShows;
-	public ShowList currentShows;
-	public ShowList upcomingShows;
+	public ShowPlaylist completedShows;
+	public ShowPlaylist currentShows;
+	public ShowPlaylist upcomingShows;
 	
-	public SongList completedSongs;
-	public SongList currentSongs;
-	public SongList upcomingSongs;
+	public SongPlaylist completedSongs;
+	public SongPlaylist currentSongs;
+	public SongPlaylist upcomingSongs;
 	
 	public GameList completedGames;
 	public GameList currentGames;
@@ -21,13 +21,13 @@ public class User {
 	
 	
 	// User-Customized Categorization
-	public ShowList allShows;
-	public ShowList favoriteShows;
-	public List<ShowList> showPlaylists = new ArrayList<>();
+	public ShowPlaylist allShows;
+	public ShowPlaylist favoriteShows;
+	public List<ShowPlaylist> showPlaylists = new ArrayList<>();
 	
-	public SongList allSongs;
-	public SongList favoriteSongs;
-	public List<SongList> songPlaylists = new ArrayList<>();
+	public SongPlaylist allSongs;
+	public SongPlaylist favoriteSongs;
+	public List<SongPlaylist> songPlaylists = new ArrayList<>();
 	
 	public GameList allGames;
 	public GameList favoriteGames;
