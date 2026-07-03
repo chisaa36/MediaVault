@@ -4,7 +4,7 @@ import java.util.List;
 
 import application.model.Show;
 
-public interface SeriesDAO {
+public interface ShowDAO {
 	
 	void addGame(Show show) throws SQLException;
 	Show getShowByTitle(String title) throws SQLException;

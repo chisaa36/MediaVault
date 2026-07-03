@@ -4,7 +4,7 @@ import java.util.List;
 
 import application.model.Song;
 
-public interface MusicDAO {
+public interface SongDAO {
 	
 	void addSong(Song song) throws SQLException;
 	Song getSongByTitle(String title) throws SQLException;
