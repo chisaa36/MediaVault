@@ -21,7 +21,8 @@ public class GamesDAOImpl implements GameDAO{
 	}
 
 	@Override
-	public void addGame(Game game) throws SQLException {
+	public int addGame(Game game) throws SQLException {
+		int gameId = -1;
 		String sql = "INSERT INTO games (title, status, user_rating, developer, avg_playtime_mins) VALUES (?, ?, ?, ?, ?)";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
@@ -32,12 +33,15 @@ public class GamesDAOImpl implements GameDAO{
 			stmt.setString(4, game.getDeveloper());
 			stmt.setInt(5, game.getAvgPlaytimeMins());
 			stmt.executeUpdate();
+			ResultSet keys = stmt.getGeneratedKeys();
+	        if (keys.next()) {
+	            gameId = keys.getInt(1);
+	        }
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 		}
 		
 		// add game to "all_games" playlist
-		int gameId = -1;
 		sql = "SELECT id FROM games WHERE title = ?";
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setString(1, game.getTitle());
@@ -59,8 +63,9 @@ public class GamesDAOImpl implements GameDAO{
 	        }
 			throw e;
 		}
-	
+		
 		System.out.println("Data inserted.");
+		return gameId;
 	}
 
 	@Override
@@ -164,6 +169,35 @@ public class GamesDAOImpl implements GameDAO{
 		}
 		
 		return games;
+	}
+	
+	@Override
+	public int addGenre(String string) throws SQLException {
+		int genreId = -1;
+		String[] genreList = string.split(" ");
+		
+		for (String genre : genreList) {
+			String sql = "INSERT OR IGNORE INTO genres (name) VALUES (?)";
+			
+		    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+		        stmt.setString(1, genre);
+		        stmt.executeUpdate();
+		        ResultSet keys = stmt.getGeneratedKeys();
+		        genreId = keys.getInt(1);
+		    }
+		}
+		
+		return genreId;
+	}
+	
+	@Override
+	public void linkGameGenre(int gameId, int genreId) throws SQLException {
+	    String sql = "INSERT OR IGNORE INTO game_genres (game_id, genre_id) VALUES (?, ?)";
+	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setInt(1, gameId);
+	        stmt.setInt(2, genreId);
+	        stmt.executeUpdate();
+	    }
 	}
 
 	@Override
