@@ -6,7 +6,7 @@ import java.sql.Statement;
 
 public class DatabaseInitializer {
 	
-	public void initialize(Connection conn) throws SQLException {
+	public static void initialize(Connection conn) throws SQLException {
 		try (Statement stmt = conn.createStatement()){
 			stmt.execute("PRAGMA foreign_keys = ON");
 			
