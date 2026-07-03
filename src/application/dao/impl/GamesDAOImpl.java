@@ -1,7 +1,10 @@
 package application.dao.impl;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import application.dao.GameDAO;
@@ -10,50 +13,171 @@ import application.model.Game;
 public class GamesDAOImpl implements GameDAO{
 	
 	private Connection conn;
+	private int userId;
 	
-	public GamesDAOImpl(Connection conn) {
+	public GamesDAOImpl(Connection conn, int userId) {
 		this.conn = conn;
+		this.userId = userId;
 	}
 
 	@Override
 	public void addGame(Game game) throws SQLException {
-		// TODO Auto-generated method stub
+		String sql = "INSERT INTO games (title, status, user_rating, developer, avg_playtime_mins) VALUES (?, ?, ?, ?, ?)";
 		
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			// add game to `games` table
+			stmt.setString(1, game.getTitle());
+			stmt.setString(2, game.getStatus());
+			stmt.setDouble(3, game.getUserRating());
+			stmt.setString(4, game.getDeveloper());
+			stmt.setInt(5, game.getAvgPlaytimeMins());
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		// add game to "all_games" playlist
+		int gameId = -1;
+		sql = "SELECT id FROM games WHERE title = ?";
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setString(1, game.getTitle());
+			ResultSet rs = stmt.executeQuery();
+			gameId = rs.getInt("id");
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		sql = "INSERT INTO games_playlist_items (playlist_id, game_id)"
+			+ " VALUES (?, ?)";
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setInt(1, 1);
+			stmt.setInt(2, gameId);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			if (e.getMessage().contains("SQLITE_CONSTRAINT_UNIQUE")) {
+	            throw new SQLException("Game already exists: " + game.getTitle());
+	        }
+			throw e;
+		}
+	
+		System.out.println("Data inserted.");
 	}
 
 	@Override
-	public Game getGameById(int id) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+	public Game getGameById(int gameId) throws SQLException {
+		Game game;
+		int avgPlaytimeMins = 0;
+		String title = null, status = null, developer = null;
+		double userRating = 0;
+		
+		String sql = "SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins" 
+				   + " FROM games_playlists gp"
+				   + " INNER JOIN games_playlist_items gpi"
+				   + " ON gp.id = gpi.playlist_id"
+				   + " INNER JOIN games g"
+				   + " ON gpi.game_id = g.id"
+				   + " WHERE gp.user_id = ? AND g.id = ?";
+
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setInt(1, userId);
+			stmt.setInt(2, gameId);
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				title = rs.getString("title");
+				status = rs.getString("status");
+				userRating = rs.getDouble("user_rating");
+				developer = rs.getString("developer");
+				avgPlaytimeMins = rs.getInt("avg_playtime_mins");
+			}
+			else {
+				System.out.println("Game not found");
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		game = new Game(title, status, userRating, developer, avgPlaytimeMins);
+		
+		return game;
 	}
 
 	@Override
 	public Game getGameByTitle(String title) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		Game game;
+		int avgPlaytimeMins = 0;
+		String status = null, developer = null;
+		double userRating = 0;
+		
+		String sql = """
+			SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
+			FROM games_playlists gp
+			JOIN games_playlist_items gpi
+			ON gp.id = gpi.playlist_id
+			JOIN games g
+			ON gpi.game_id = g.id
+			WHERE g.title = ?
+		""";
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setString(1, title);
+			ResultSet rs = stmt.executeQuery();
+			status = rs.getString("status");
+			userRating = rs.getDouble("user_rating");
+			developer = rs.getString("developer");
+			avgPlaytimeMins = rs.getInt("avg_playtime_mins");
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		game = new Game(title, status, userRating, developer, avgPlaytimeMins);
+		
+		return game;
 	}
 
 	@Override
 	public List<Game> getGamesByUser(int userId) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		List<Game> games = new ArrayList<>();
+
+		String sql = "SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins" 
+				   + " FROM games_playlists gp"
+				   + " INNER JOIN games_playlist_items gpi"
+				   + " ON gp.id = gpi.playlist_id"
+				   + " INNER JOIN games g"
+				   + " ON gpi.game_id = g.id"
+				   + " WHERE gp.user_id = ?";
+
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setInt(1, userId);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				Game game = new Game(
+					rs.getString("title"),
+					rs.getString("status"),
+					rs.getDouble("user_rating"),
+					rs.getString("developer"),
+					rs.getInt("avg_playtime_mins")
+				);
+				
+				games.add(game);
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		return games;
 	}
 
 	@Override
 	public void updateGameRating(String title, int rating) throws SQLException {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void addReview(String title, String review) throws SQLException {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void deleteGame(String title) throws SQLException {
 		// TODO Auto-generated method stub
-		
 	}
 }
