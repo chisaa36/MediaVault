@@ -8,6 +8,14 @@ public class Game {
 	public String developer;
 	public int avgPlaytimeMins;
 	
+	public Game(String title, String status, double userRating, String developer, int avgPlaytimeMins) {
+		this.title = title;
+		this.status = status;
+		this.userRating = userRating;
+		this.developer = developer;
+		this.avgPlaytimeMins = avgPlaytimeMins;
+	}
+	
 	// getters and setters
 	public String getTitle() {return title;}
 	public String getStatus() {return status;}
