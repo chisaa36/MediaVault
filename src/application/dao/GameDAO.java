@@ -13,6 +13,6 @@ public interface GameDAO {
 	int addGenre(String genre) throws SQLException;
 	void linkGameGenre(int gameId, int genreId) throws SQLException;
 	void updateGameRating(String title, int rating) throws SQLException;
-	void addReview(String title, String review) throws SQLException;
+	void updateReview(String title, String review) throws SQLException;
 	void deleteGame(String title) throws SQLException;
 }
