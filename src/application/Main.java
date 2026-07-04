@@ -20,6 +20,9 @@ public class Main {
 		DatabaseInitializer.initialize(conn);
 		int userId = DatabaseInitializer.registerUser(conn, "Amiel");
 		
+		// override just in case u run this program multiple times :D
+		userId = 1;
+		
 		// instantiate DAO
 		GamesDAOImpl gamesDAOImpl = new GamesDAOImpl(conn, userId);
 		
@@ -45,7 +48,6 @@ public class Main {
 		game = new Game("VALORANT", "Completed", -1, "Rito", 999);
 		try {
 			gamesDAOImpl.addGame(game);
-			System.out.println("Game added successfully.");
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 		}
