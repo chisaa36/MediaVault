@@ -6,5 +6,17 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/openjfx-21.0.11_windows-x64_bin-sdk/javafx-sdk-21.0.11/lib/javafx.base.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/openjfx-21.0.11_windows-x64_bin-sdk/javafx-sdk-21.0.11/lib/javafx.controls.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/openjfx-21.0.11_windows-x64_bin-sdk/javafx-sdk-21.0.11/lib/javafx.fxml.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/openjfx-21.0.11_windows-x64_bin-sdk/javafx-sdk-21.0.11/lib/javafx.graphics.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/openjfx-21.0.11_windows-x64_bin-sdk/javafx-sdk-21.0.11/lib/javafx.media.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/openjfx-21.0.11_windows-x64_bin-sdk/javafx-sdk-21.0.11/lib/javafx.swing.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/openjfx-21.0.11_windows-x64_bin-sdk/javafx-sdk-21.0.11/lib/javafx.web.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/openjfx-21.0.11_windows-x64_bin-sdk/javafx-sdk-21.0.11/lib/javafx-swt.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/sqlite-jdbc-3.53.2.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/jackson-annotations-2.14.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/jackson-databind-2.14.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/justi/Downloads/jackson-core-2.14.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

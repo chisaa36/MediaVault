@@ -1,15 +1,25 @@
 package application.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Song {
-	
-	public String title;
-	public List<String> genres = new ArrayList<>();
-	public double userRating;
-	public String album;
-	public String artist;
-	public int yearReleased;
-	public int runtimeMins;
+    private String title;
+    private String artist;
+    private String runtime;
+
+    public Song(String title, String artist, String runtime) {
+        this.title = title;
+        this.artist = artist;
+        this.runtime = runtime;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public String getRuntime() {
+        return runtime;
+    }
 }

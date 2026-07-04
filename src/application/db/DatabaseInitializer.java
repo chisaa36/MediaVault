@@ -1,6 +1,8 @@
 package application.db;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -13,54 +15,58 @@ public class DatabaseInitializer {
 			// create users table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS users (
-				id INTEGER PRIMARY KEY AUTOINCREMENT
-				username TEXT
+				user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+				username TEXT NOT NULL UNIQUE,
+				password TEXT NOT NULL
 			)""");
 			
 			// create games table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS games (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				title TEXT,
-				genre TEXT,
+				user_id INTEGER NOT NULL,
+				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
 				developer TEXT,
-				avg_playtime_mins INTEGER
+				avg_playtime_mins INTEGER,
+				review TEXT
 			)""");
 			
 			// create music table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS music (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				title TEXT,
-				genre TEXT,
+				user_id INTEGER NOT NULL,
+				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
 				artist TEXT,
 				year_released INTEGER,
-				runtime_mins INTEGER
+				runtime_mins INTEGER,
+				review TEXT
 			)""");
 			
 			// create series table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS series (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				title TEXT,
-				genre TEXT,
+				user_id INTEGER NOT NULL,
+				title TEXT NOT NULL UNIQUE,
 				status TEXT,
-				user_rating REAL
+				user_rating REAL,
+				review TEXT
 			)""");
 			
 			// create seasons table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS seasons (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				series_id INTEGER NOT NULL,
+				shows_id INTEGER NOT NULL,
 				title TEXT,
 				status TEXT,
 				
-				FOREIGN KEY (series_id) REFERENCES series(id)
+				FOREIGN KEY (shows_id) REFERENCES shows(id)
 			)""");
 			
 			// create episodes table
@@ -70,7 +76,6 @@ public class DatabaseInitializer {
 				season_id INTEGER NOT NULL,
 				episode_number INTEGER NOT NULL,
 				title TEXT,
-				genre TEXT,
 				status TEXT,
 				user_rating REAL,
 							
@@ -82,61 +87,163 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS games_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT,
+				title TEXT UNIQUE,
 				
-				FOREIGN KEY (users_id) REFERENCES users(id)
+				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
 			
-			// create music_playlists table
+			// create songs_playlists table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS music_playlists (
+				CREATE TABLE IF NOT EXISTS songs_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT,
+				title TEXT UNIQUE,
 				user_rating REAL,
 				
-				FOREIGN KEY (users_id) REFERENCES users(id)
+				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
 			
-			// create series_playlists table
+			// create shows_playlists table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS series_playlists (
+				CREATE TABLE IF NOT EXISTS shows_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT,
+				title TEXT UNIQUE,
 				
-				FOREIGN KEY (users_id) REFERENCES users(id)
+				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
 			
-			// create games_lists table
+			// create games_playlist_items table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS games_lists (
-				playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
-				game_id INTEGER NOT NULL,
-				
+				CREATE TABLE IF NOT EXISTS games_playlist_items (
+				playlist_id INTEGER NOT NULL,
+			    game_id INTEGER NOT NULL,
+			    
+			    PRIMARY KEY (playlist_id, game_id),
 				FOREIGN KEY (playlist_id) REFERENCES games_playlists(id),
 				FOREIGN KEY (game_id) REFERENCES games(id)
 			)""");
 			
-			// create music_lists table
+			// create songs_playlist_items table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS music_lists (
-				playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
-				music_id INTEGER NOT NULL,
+				CREATE TABLE IF NOT EXISTS songs_playlist_items (
+				playlist_id INTEGER NOT NULL,
+				songs_id INTEGER NOT NULL,
 				
-				FOREIGN KEY (playlist_id) REFERENCES music_playlists(id),
-				FOREIGN KEY (music_id) REFERENCES music(id)
+				PRIMARY KEY (playlist_id, songs_id),
+				FOREIGN KEY (playlist_id) REFERENCES songs_playlists(id),
+				FOREIGN KEY (songs_id) REFERENCES songs(id)
  			)""");
 			
-			// create series_lists table
+			// create shows_playlist_items table
 			stmt.execute("""
-				CREATE TABLE IF NOT EXISTS series_lists (
-				playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
-				series_id INTEGER NOT NULL,
+				CREATE TABLE IF NOT EXISTS shows_playlist_items (
+				playlist_id INTEGER NOT NULL,
+				shows_id INTEGER NOT NULL,
 				
-				FOREIGN KEY (playlist_id) REFERENCES series_playlists(id),
-				FOREIGN KEY (series_id) REFERENCES series(id)
+				PRIMARY KEY (playlist_id, shows_id),
+				FOREIGN KEY (playlist_id) REFERENCES shows_playlists(id),
+				FOREIGN KEY (shows_id) REFERENCES shows(id)
 			)""");
+			
+			// create genres table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS genres (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				genre TEXT NOT NULL UNIQUE
+			)""");
+			
+			// create game_genres table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS game_genres (
+				game_id INTEGER NOT NULL,
+				genre_id INTEGER NOT NULL,
+				
+				PRIMARY KEY (game_id, genre_id),
+				FOREIGN KEY (game_id) REFERENCES games(id),
+				FOREIGN KEY (genre_id) REFERENCES genres(id)
+			)""");
+			
+			// create songs_genres table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS songs_genres (
+				songs_id INTEGER NOT NULL,
+				genre_id INTEGER NOT NULL,
+				
+				PRIMARY KEY (songs_id, genre_id),
+				FOREIGN KEY (songs_id) REFERENCES songs(id),
+				FOREIGN KEY (genre_id) REFERENCES genres(id)
+			)""");
+			
+			// create shows_genres table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS shows_genres (
+				shows_id INTEGER NOT NULL,
+				genre_id INTEGER NOT NULL,
+				
+				PRIMARY KEY (shows_id, genre_id),
+				FOREIGN KEY (shows_id) REFERENCES shows(id),
+				FOREIGN KEY (genre_id) REFERENCES genres(id)
+			)""");
+			System.out.println("Tables initialized.");
+			
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
 		}
+	}
+	
+	public static int registerUser(Connection conn, String username) throws SQLException {
+		int userId = -1;
+	
+		// add user to `users` table
+		String sql = "INSERT INTO users (username) VALUES (?)";
+		try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+			pstmt.setString(1, username);
+			pstmt.executeUpdate();
+			ResultSet keys = pstmt.getGeneratedKeys();
+	        if (keys.next()) {
+	            userId = keys.getInt(1);
+	        }
+		} catch (SQLException e) {
+			if (e.getMessage().contains("UNIQUE constraint failed")) {
+		        System.out.println("Username '" + username + "' is already taken.");
+		    } else {
+		        System.out.println(e.getMessage());
+		    }
+		}
+		
+		// add "all" entries category if user is added
+		if (userId != -1) {
+			sql = "INSERT OR IGNORE INTO games_playlists (user_id, title) VALUES (?, ?)";
+			try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+				pstmt.setInt(1, userId);
+				pstmt.setString(2, "all_games");
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+			    System.out.println(e.getMessage());
+			}
+			
+			sql = "INSERT OR IGNORE INTO songs_playlists (user_id, title) VALUES (?, ?)";
+			try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+				pstmt.setInt(1, userId);
+				pstmt.setString(2, "all_songs");
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+			    System.out.println(e.getMessage());
+			}
+			
+			sql = "INSERT OR IGNORE INTO shows_playlists (user_id, title) VALUES (?, ?)";
+			try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+				pstmt.setInt(1, userId);
+				pstmt.setString(2, "all_shows");
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+			    System.out.println(e.getMessage());
+			}
+		}
+		
+		System.out.println("User registered.");
+		
+		return userId;
 	}
 }
