@@ -16,7 +16,7 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS users (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				username TEXT
+				username TEXT UNIQUE
 			)""");
 			
 			// create games table
@@ -123,9 +123,10 @@ public class DatabaseInitializer {
 			// create songs_playlist_items table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS songs_playlist_items (
-				playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
+				playlist_id INTEGER NOT NULL,
 				songs_id INTEGER NOT NULL,
 				
+				PRIMARY KEY (playlist_id, songs_id),
 				FOREIGN KEY (playlist_id) REFERENCES songs_playlists(id),
 				FOREIGN KEY (songs_id) REFERENCES songs(id)
  			)""");
@@ -133,9 +134,10 @@ public class DatabaseInitializer {
 			// create shows_playlist_items table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS shows_playlist_items (
-				playlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
+				playlist_id INTEGER NOT NULL,
 				shows_id INTEGER NOT NULL,
 				
+				PRIMARY KEY (playlist_id, shows_id),
 				FOREIGN KEY (playlist_id) REFERENCES shows_playlists(id),
 				FOREIGN KEY (shows_id) REFERENCES shows(id)
 			)""");
@@ -155,7 +157,7 @@ public class DatabaseInitializer {
 				
 				PRIMARY KEY (game_id, genre_id),
 				FOREIGN KEY (game_id) REFERENCES games(id),
-				FOREIGN KEY (genre_id) REFERENCES genre(id)
+				FOREIGN KEY (genre_id) REFERENCES genres(id)
 			)""");
 			
 			// create songs_genres table
@@ -166,7 +168,7 @@ public class DatabaseInitializer {
 				
 				PRIMARY KEY (songs_id, genre_id),
 				FOREIGN KEY (songs_id) REFERENCES songs(id),
-				FOREIGN KEY (genre_id) REFERENCES genre(id)
+				FOREIGN KEY (genre_id) REFERENCES genres(id)
 			)""");
 			
 			// create shows_genres table
@@ -177,7 +179,7 @@ public class DatabaseInitializer {
 				
 				PRIMARY KEY (shows_id, genre_id),
 				FOREIGN KEY (shows_id) REFERENCES shows(id),
-				FOREIGN KEY (genre_id) REFERENCES genre(id)
+				FOREIGN KEY (genre_id) REFERENCES genres(id)
 			)""");
 			System.out.println("Tables initialized.");
 			
@@ -187,50 +189,53 @@ public class DatabaseInitializer {
 	}
 	
 	public static int registerUser(Connection conn, String username) throws SQLException {
-		int userId;
+		int userId = -1;
 	
 		// add user to `users` table
 		String sql = "INSERT INTO users (username) VALUES (?)";
-		try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+		try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 			pstmt.setString(1, username);
 			pstmt.executeUpdate();
+			ResultSet keys = pstmt.getGeneratedKeys();
+	        if (keys.next()) {
+	            userId = keys.getInt(1);
+	        }
 		} catch (SQLException e) {
-		    System.out.println(e.getMessage());
+			if (e.getMessage().contains("UNIQUE constraint failed")) {
+		        System.out.println("Username '" + username + "' is already taken.");
+		    } else {
+		        System.out.println(e.getMessage());
+		    }
 		}
 		
-		sql = "SELECT id FROM users WHERE username = ?";
-		try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-		    pstmt.setString(1, username);
-		    ResultSet rs = pstmt.executeQuery();
-		    userId = rs.getInt("id");
-		}
-		
-		// add "all" entries category
-		sql = "INSERT INTO games_playlists (user_id, title) VALUES (?, ?)";
-		try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-			pstmt.setInt(1, userId);
-			pstmt.setString(2, "all_games");
-			pstmt.executeUpdate();
-		} catch (SQLException e) {
-		    System.out.println(e.getMessage());
-		}
-		
-		sql = "INSERT INTO songs_playlists (user_id, title) VALUES (?, ?)";
-		try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-			pstmt.setInt(1, userId);
-			pstmt.setString(2, "all_songs");
-			pstmt.executeUpdate();
-		} catch (SQLException e) {
-		    System.out.println(e.getMessage());
-		}
-		
-		sql = "INSERT INTO shows_playlists (user_id, title) VALUES (?, ?)";
-		try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-			pstmt.setInt(1, userId);
-			pstmt.setString(2, "all_shows");
-			pstmt.executeUpdate();
-		} catch (SQLException e) {
-		    System.out.println(e.getMessage());
+		// add "all" entries category if user is added
+		if (userId != -1) {
+			sql = "INSERT OR IGNORE INTO games_playlists (user_id, title) VALUES (?, ?)";
+			try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+				pstmt.setInt(1, userId);
+				pstmt.setString(2, "all_games");
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+			    System.out.println(e.getMessage());
+			}
+			
+			sql = "INSERT OR IGNORE INTO songs_playlists (user_id, title) VALUES (?, ?)";
+			try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+				pstmt.setInt(1, userId);
+				pstmt.setString(2, "all_songs");
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+			    System.out.println(e.getMessage());
+			}
+			
+			sql = "INSERT OR IGNORE INTO shows_playlists (user_id, title) VALUES (?, ?)";
+			try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+				pstmt.setInt(1, userId);
+				pstmt.setString(2, "all_shows");
+				pstmt.executeUpdate();
+			} catch (SQLException e) {
+			    System.out.println(e.getMessage());
+			}
 		}
 		
 		System.out.println("User registered.");
