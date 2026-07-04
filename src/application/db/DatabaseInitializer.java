@@ -27,7 +27,8 @@ public class DatabaseInitializer {
 				status TEXT,
 				user_rating REAL,
 				developer TEXT,
-				avg_playtime_mins INTEGER
+				avg_playtime_mins INTEGER,
+				review TEXT
 			)""");
 			
 			// create songs table
@@ -39,7 +40,8 @@ public class DatabaseInitializer {
 				user_rating REAL,
 				artist TEXT,
 				year_released INTEGER,
-				runtime_mins INTEGER
+				runtime_mins INTEGER,
+				review TEXT
 			)""");
 			
 			// create shows table
@@ -48,7 +50,8 @@ public class DatabaseInitializer {
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
-				user_rating REAL
+				user_rating REAL,
+				review TEXT
 			)""");
 			
 			// create seasons table
