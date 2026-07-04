@@ -15,24 +15,16 @@ public class DatabaseInitializer {
 			// create users table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS users (
-<<<<<<< HEAD
 				user_id INTEGER PRIMARY KEY AUTOINCREMENT,
 				username TEXT NOT NULL UNIQUE,
 				password TEXT NOT NULL
-=======
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				username TEXT UNIQUE
->>>>>>> 47f6aa50db8b9bf16090ef61e4cfb0955146b74c
 			)""");
 			
 			// create games table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS games (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-<<<<<<< HEAD
 				user_id INTEGER NOT NULL,
-=======
->>>>>>> 47f6aa50db8b9bf16090ef61e4cfb0955146b74c
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
@@ -45,10 +37,7 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS songs (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-<<<<<<< HEAD
 				user_id INTEGER NOT NULL,
-=======
->>>>>>> 47f6aa50db8b9bf16090ef61e4cfb0955146b74c
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
@@ -62,10 +51,7 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS shows (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-<<<<<<< HEAD
 				user_id INTEGER NOT NULL,
-=======
->>>>>>> 47f6aa50db8b9bf16090ef61e4cfb0955146b74c
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
