@@ -14,7 +14,7 @@ import java.util.Scanner;
 
 public class Main {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws SQLException {
 		
 		int checkCtr = 0;
 		boolean securityCheck;
@@ -363,10 +363,6 @@ public class Main {
 					 + entry.getDeveloper() + "\t" + entry.getAvgPlaytimeMins());
 		}
 		*/
-	}
-	
-	public static void getShowVault(){
-		
 	}
 	
 	private static String fitToSpace(String text, int width) {
