@@ -8,21 +8,23 @@ import java.sql.Statement;
 
 public class DatabaseInitializer {
 	
-	public static void initialize(Connection conn) throws SQLException {
+	public void initialize(Connection conn) throws SQLException {
 		try (Statement stmt = conn.createStatement()){
 			stmt.execute("PRAGMA foreign_keys = ON");
 			
 			// create users table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS users (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				username TEXT UNIQUE
+				user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+				username TEXT NOT NULL UNIQUE,
+				password TEXT NOT NULL
 			)""");
 			
 			// create games table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS games (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
@@ -35,6 +37,7 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS songs (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
@@ -48,6 +51,7 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS shows (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,

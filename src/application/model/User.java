@@ -15,9 +15,9 @@ public class User {
 	public SongPlaylist currentSongs;
 	public SongPlaylist upcomingSongs;
 	
-	public GameList completedGames;
-	public GameList currentGames;
-	public GameList upcomingGames;
+	public GamePlaylist completedGames;
+	public GamePlaylist currentGames;
+	public GamePlaylist upcomingGames;
 	
 	
 	// User-Customized Categorization
@@ -29,7 +29,7 @@ public class User {
 	public SongPlaylist favoriteSongs;
 	public List<SongPlaylist> songPlaylists = new ArrayList<>();
 	
-	public GameList allGames;
-	public GameList favoriteGames;
-	public List<GameList> gamePlaylists = new ArrayList<>();
+	public GamePlaylist allGames;
+	public GamePlaylist favoriteGames;
+	public List<GamePlaylist> gamePlaylists = new ArrayList<>();
 }

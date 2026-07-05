@@ -4,7 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import application.model.Game;
-import application.model.GameList;
+import application.model.GamePlaylist;
 
 public interface GamePlaylistDAO {
 	
@@ -13,6 +13,6 @@ public interface GamePlaylistDAO {
 	void addGamesToPlaylist(int playlistId, List<Game> games) throws SQLException;
 	void removeGameFromPlaylist(int playlistId, int gameId) throws SQLException;
 	List<Game> getGamesInPlaylist(int playlistId) throws SQLException;
-	List<GameList> getPlaylistsByUser(int userId) throws SQLException;
+	List<GamePlaylist> getPlaylistsByUser(int userId) throws SQLException;
 	void deletePlaylist(int playlistId) throws SQLException;
 }
