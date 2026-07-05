@@ -197,6 +197,7 @@ public class Main {
 	
 	public static void getSongVault(int user_id, Connection conn, Scanner scanner){
 		
+		int ctr, trackNo = 0, songChoice = -1, resultSize;
 		//SongDAO songDAO = new SongDAO(conn);
 		String choice, choice2, choice3, search;
 		
@@ -246,29 +247,68 @@ public class Main {
 				    else if(choice2.equals("+"))
 				    {
 				    	System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =\n");
-				    	
-				    	System.out.print(" Search Song: ");
-				        search = scanner.nextLine();
 
 				        try {
-				            List<Song> results = spotifyClient.searchTracks(search);
-
-				            System.out.println();
-				            System.out.println("-----------------------------------------------------------------");
-				            System.out.printf("| %-3s | %-23s | %-6s | %-20s |%n", "No.", "Title", "Length", "Artist");
-				            System.out.println("-----------------------------------------------------------------");
-
-				            int i = 1;
-
-				            for (Song song : results) {
-				                System.out.printf("| %-3d | %-23s | %-6s | %-20s |%n",
-				                        i++,
-				                        fitToSpace(song.getTitle(), 23),
-				                        song.getRuntime(),
-				                        fitToSpace(song.getArtist(), 20));
-				            }
-
-				            System.out.println("-----------------------------------------------------------------");
+				        	
+				        	do
+				        	{
+				        		System.out.print(" Search Song: ");
+						        search = scanner.nextLine();
+						        
+						        List<Song> results = spotifyClient.searchTracks(search);
+					            System.out.println(" Songs found: " + results.size());
+						        
+					            System.out.println();
+					            System.out.println("-----------------------------------------------------------------");
+					            System.out.printf("| %-3s | %-23s | %-6s | %-20s |%n", "No.", "Title", "Length", "Artist");
+					            System.out.println("-----------------------------------------------------------------");
+					            
+					            resultSize = Math.min(10, results.size());
+					            
+					            for(ctr = 0; ctr < resultSize; ctr++)
+					            {
+					            	Song song = results.get(ctr);
+					            	
+					                System.out.printf("| %-3d | %-23s | %-6s | %-20s |%n", ctr+1, fitToSpace(song.getTitle(), 23), song.getRuntime(), fitToSpace(song.getArtist(), 20));
+					            }
+					            System.out.println("-----------------------------------------------------------------");
+					            System.out.println();
+					            System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =");
+					            System.out.println("= [#] Choose Song (Input the Track No.)");
+					            System.out.println("= [?] Change Search");
+					            System.out.println("= [<] Back to My Songs");
+					            System.out.print("=\n= Enter your choice: ");
+					            choice3 = scanner.nextLine();
+					            
+					            try {
+					            	songChoice = Integer.parseInt(choice3);
+					            }
+					            catch (NumberFormatException e) {
+					            }
+					            
+					            if(choice3.equals("<"))
+					            {
+					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+					            }
+					            else if(choice3.equals("?"))
+					            {
+					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+					            }
+					            else if(1 <= songChoice && songChoice <= resultSize)
+					            {
+					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+					            	
+					            	
+					            	
+					            	choice3 = "<";
+					            }
+					            else
+					            {
+					            	System.out.println("=\n= Invalid Input!");
+							    	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+					            }
+				            
+				        	} while(!choice3.equals("<"));
 
 				        } catch (Exception e) {
 				            System.out.println("Could not connect to Spotify.");
@@ -300,7 +340,7 @@ public class Main {
 		    	System.out.println("= [-] Remove a Song Playlist");
 		    	System.out.println("= [<] Back to Song Vault");
 		    	System.out.print("=\n= Enter your choice: ");
-		    	choice3 = scanner.nextLine();
+		    	//choice4 = scanner.nextLine();
 		    }
 		    else if(choice.equals("<"))
 		    {

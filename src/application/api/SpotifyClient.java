@@ -56,18 +56,15 @@ public class SpotifyClient {
 
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
 
-        String url = "https://api.spotify.com/v1/search?q="
-                + encodedQuery
-                + "&type=track&limit=10";
+        String url = "https://api.spotify.com/v1/search?q=" + encodedQuery + "&type=track&limit=10";
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Authorization", "Bearer " + accessToken)
                 .GET()
                 .build();
-
-        HttpResponse<String> response =
-                client.send(request, HttpResponse.BodyHandlers.ofString());
+        
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         String json = response.body();
 
@@ -75,6 +72,12 @@ public class SpotifyClient {
 
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(json);
+
+        if (!root.has("tracks")) {
+            System.out.println("Spotify did not return any tracks.");
+            return songs;
+        }
+
         JsonNode items = root.get("tracks").get("items");
 
         for (JsonNode item : items) {
@@ -83,13 +86,11 @@ public class SpotifyClient {
 
             int durationMs = item.get("duration_ms").asInt();
 
-            String runtime = String.format("%d:%02d",
-                    durationMs / 60000,
-                    (durationMs / 1000) % 60);
+            String runtime = String.format("%d:%02d", durationMs / 60000, (durationMs / 1000) % 60);
 
             songs.add(new Song(title, artist, runtime));
         }
-
+        
         return songs;
     }
 }
