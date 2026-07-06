@@ -25,7 +25,6 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 		this.gamesDAOImpl = new GamesDAOImpl(conn, userId);
 	}
 	
-	@Override
 	public int createPlaylist(String name) throws SQLException {
 		int playlistId = -1;
 		
@@ -52,7 +51,6 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 		return playlistId;
 	}
 
-	@Override
 	public void addGameToPlaylist(int playlistId, Game game) throws SQLException {
 		
 		// find game_id
@@ -126,6 +124,7 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 		List<Game> items = new ArrayList<Game>();
 		
 		String sql = """
+
 			SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
 			FROM games_playlists gp
 			JOIN games_playlist_items gpi
@@ -187,5 +186,4 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 			System.out.println(e.getMessage());
 		}
 	}
-
 }

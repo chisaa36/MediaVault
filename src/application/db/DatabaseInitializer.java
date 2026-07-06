@@ -41,7 +41,7 @@ public class DatabaseInitializer {
 				user_rating REAL,
 				artist TEXT,
 				year_released INTEGER,
-				runtime_mins INTEGER,
+				runtime_seconds INTEGER,
 				review TEXT
 			)""");
 			
