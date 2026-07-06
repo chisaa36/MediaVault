@@ -12,12 +12,12 @@ import application.dao.GameDAO;
 import application.model.Game;
 import application.model.Status;
 
-public class GamesDAOImpl implements GameDAO{
+public class GameDAOImpl implements GameDAO{
 	
 	private Connection conn;
 	private int userId;
 	
-	public GamesDAOImpl(Connection conn, int userId) {
+	public GameDAOImpl(Connection conn, int userId) {
 		this.conn = conn;
 		this.userId = userId;
 	}
