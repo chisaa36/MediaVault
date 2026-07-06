@@ -172,8 +172,21 @@ public class GamesDAOImpl implements GameDAO{
 		    try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 		        stmt.setString(1, genre);
 		        stmt.executeUpdate();
+
 		        ResultSet keys = stmt.getGeneratedKeys();
-		        genreId = keys.getInt(1);
+		        if (keys.next()) {
+		            genreId = keys.getInt(1);
+		        } else {
+		            sql = "SELECT id FROM genres WHERE genre = ?";
+		            try (PreparedStatement selStmt = conn.prepareStatement(sql)) {
+		                selStmt.setString(1, genre);
+						
+		                ResultSet rs = selStmt.executeQuery();
+		                if (rs.next()) {
+		                    genreId = rs.getInt("id");
+		                }
+		            }
+		        }
 		    }
 		}
 		
@@ -233,13 +246,14 @@ public class GamesDAOImpl implements GameDAO{
 	@Override
 	public int getGameId(String title) throws SQLException {
 		String sql = """
-				SELECT id FROM games_playlists gp
-				JOIN games_playlists_items gpi
-				ON gp.id = gpi.playlist_id
-				JOIN games g
-				ON gpi.game_id = g.id
-				WHERE user_id = ? AND playlisy_id = 1 AND title = ?
-				""";
+			SELECT g.id
+			FROM games_playlists gp
+			JOIN games_playlist_items gpi
+			ON gp.id = gpi.playlist_id
+			JOIN games g
+			ON gpi.game_id = g.id
+			WHERE gp.user_id = ? AND gp.id = 1 AND g.title = ?
+			""";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.setInt(1, userId);

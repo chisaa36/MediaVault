@@ -8,8 +8,8 @@ import application.model.GamePlaylist;
 
 public interface GamePlaylistDAO {
 	
-	int createPlaylist(String name, int userId) throws SQLException;
-	void addGameToPlaylist(int playlistId, int gameId) throws SQLException;
+	int createPlaylist(String name) throws SQLException;
+	void addGameToPlaylist(int playlistId, Game game) throws SQLException;
 	void addGamesToPlaylist(int playlistId, List<Game> games) throws SQLException;
 	void removeGameFromPlaylist(int playlistId, int gameId) throws SQLException;
 	List<Game> getGamesInPlaylist(int playlistId) throws SQLException;
