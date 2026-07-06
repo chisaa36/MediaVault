@@ -86,9 +86,7 @@ public class SpotifyClient {
 
             int durationMs = item.get("duration_ms").asInt();
 
-            String runtime = String.format("%d:%02d", durationMs / 60000, (durationMs / 1000) % 60);
-
-            songs.add(new Song(title, artist, runtime));
+            songs.add(new Song(title, artist, durationMs/1000));
         }
         
         return songs;

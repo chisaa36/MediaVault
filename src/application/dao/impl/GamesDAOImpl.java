@@ -27,7 +27,7 @@ public class GamesDAOImpl implements GameDAO{
 		String sql = "INSERT INTO games (title, status, user_rating, developer, avg_playtime_mins) VALUES (?, ?, ?, ?, ?)";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
-			// add game to `games` table
+			// add game to 'games' table
 			stmt.setString(1, game.getTitle());
 			stmt.setString(2, game.getStatus());
 			stmt.setDouble(3, game.getUserRating());

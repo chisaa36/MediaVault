@@ -269,13 +269,14 @@ public class Main {
 					            {
 					            	Song song = results.get(ctr);
 					            	
-					                System.out.printf("| %-3d | %-23s | %-6s | %-20s |%n", ctr+1, fitToSpace(song.getTitle(), 23), song.getRuntime(), fitToSpace(song.getArtist(), 20));
+					                System.out.printf("| %-3d | %-23s | %-6s | %-20s |%n", ctr+1, fitToSpace(song.getTitle(), 23), song.getRuntimeString(), fitToSpace(song.getArtist(), 20));
 					            }
 					            System.out.println("-----------------------------------------------------------------");
 					            System.out.println();
 					            System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =");
 					            System.out.println("= [#] Choose Song (Input the Track No.)");
 					            System.out.println("= [?] Change Search");
+					            System.out.println("= [+] Add Song Manually");
 					            System.out.println("= [<] Back to My Songs");
 					            System.out.print("=\n= Enter your choice: ");
 					            choice3 = scanner.nextLine();
@@ -291,6 +292,10 @@ public class Main {
 					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
 					            }
 					            else if(choice3.equals("?"))
+					            {
+					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+					            }
+					            else if(choice3.equals("+"))
 					            {
 					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
 					            }
