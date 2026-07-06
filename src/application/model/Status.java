@@ -7,6 +7,7 @@ public enum Status {
 	
 	/**
 	 * Converts the value to string for storing inside the database
+	 * 
 	 * @return lowercased string without underscores
 	 */
 	public String toDbString() {
@@ -15,6 +16,7 @@ public enum Status {
 	
 	/**
 	 * Converts string to an uppercase snake case
+	 * 
 	 * @param value the string equivalent of status inside the database
 	 * @return string in "screaming snake case"
 	 */

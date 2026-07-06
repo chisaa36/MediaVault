@@ -15,4 +15,5 @@ public interface GameDAO {
 	void updateGameRating(String title, double rating) throws SQLException;
 	void updateReview(String title, String review) throws SQLException;
 	void deleteGame(String title) throws SQLException;
+	int getGameId(String title) throws SQLException;
 }
