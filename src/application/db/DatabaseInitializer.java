@@ -53,6 +53,11 @@ public class DatabaseInitializer {
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
+				num_of_seasons INTEGER,
+				num_of_episodes INTEGER,
+				avg_mins_per_ep INTEGER,
+				first_year_aired INTEGER,
+				last_year_aired INTEGER,
 				review TEXT
 			)""");
 			
