@@ -7,6 +7,14 @@ public class Episode {
 	private double user_rating;
 	private String review;
 	
+	// constructor
+	public Episode(String title, Status status, double user_rating, String review) {
+		this.title = title;
+		this.status = status;
+		this.user_rating = user_rating;
+		this.review = review;
+	}
+	
 	// getters and setters
 	public String getTitle() {return title;}
 	public Status getStatus() {return status;}
