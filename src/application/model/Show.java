@@ -12,10 +12,9 @@ public class Show {
 	public int lastYearAired;
 	
 	// constructor
-	public Show(String title, double userRating, int numOfSeasons, int numOfEpisodes, int avgMinsPerEp,
-			int firstYearAired, int lastYearAired) {
-		super();
+	public Show(String title, Status status, double userRating, int numOfSeasons, int numOfEpisodes, int avgMinsPerEp, int firstYearAired, int lastYearAired) {
 		this.title = title;
+		this.status = status;
 		this.userRating = userRating;
 		this.numOfSeasons = numOfSeasons;
 		this.numOfEpisodes = numOfEpisodes;
