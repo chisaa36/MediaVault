@@ -3,6 +3,7 @@ package application.model;
 public class Show {
 	
 	public String title;
+	public Status status;
 	public double userRating;
 	public int numOfSeasons;
 	public int numOfEpisodes;
@@ -10,6 +11,7 @@ public class Show {
 	public int firstYearAired;
 	public int lastYearAired;
 	
+	// constructor
 	public Show(String title, double userRating, int numOfSeasons, int numOfEpisodes, int avgMinsPerEp,
 			int firstYearAired, int lastYearAired) {
 		super();
@@ -22,7 +24,9 @@ public class Show {
 		this.lastYearAired = lastYearAired;
 	}
 	
+	// getters and setters
 	public String getTitle() {return title;}
+	public Status getStatus() {return status;}
 	public double getUserRating() {return userRating;}
 	public int getNumOfSeasons() {return numOfSeasons;}
 	public int getNumOfEpisodes() {return numOfEpisodes;}
@@ -31,6 +35,7 @@ public class Show {
 	public int getLastYearAired() {return lastYearAired;}
 	
 	public void setTitle(String title) {this.title=title;}
+	public void setTitle(Status status) {this.status=status;}
 	public void setUserRating(double userRating) {this.userRating=userRating;}
 	public void setNumOfSeasons(int numOfSeasons) {this.numOfSeasons=numOfSeasons;}
 	public void setNumOfEpisodes(int numOfEpisodes) {this.numOfEpisodes=numOfEpisodes;}
