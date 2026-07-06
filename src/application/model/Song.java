@@ -3,17 +3,15 @@ package application.model;
 public class Song {
 	
 	private String title;
-	private String genre;
-	private String status;
+	private Status status;
 	private double userRating;
 	private String album;
 	private String artist;
 	private int yearReleased;
 	private int runtimeSeconds;
 
-    public Song(String title, String genre, String status, double userRating, String album, String artist, int yearReleased, int runtimeSeconds) {
+    public Song(String title, Status status, double userRating, String album, String artist, int yearReleased, int runtimeSeconds) {
         this.title = title;
-        this.genre = genre;
         this.status = status;
         this.userRating = userRating;
         this.album = album;
@@ -26,11 +24,7 @@ public class Song {
         return title;
     }
     
-    public String getGenre() {
-    	return genre;
-    }
-    
-    public String getStatus() {
+    public Status getStatus() {
     	return status;
     }
     

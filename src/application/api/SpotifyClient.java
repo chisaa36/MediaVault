@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import application.model.Song;
+import application.model.Status;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -82,11 +83,19 @@ public class SpotifyClient {
 
         for (JsonNode item : items) {
             String title = item.get("name").asText();
+
             String artist = item.get("artists").get(0).get("name").asText();
 
-            int durationMs = item.get("duration_ms").asInt();
+            String album = item.get("album").get("name").asText();
 
-            songs.add(new Song(title, artist, durationMs/1000));
+            int yearReleased = Integer.parseInt(item.get("album").get("release_date").asText().substring(0, 4));
+
+            int runtimeSeconds = item.get("duration_ms").asInt() / 1000;
+
+            Status status = Status.PLANNED;
+            double userRating = 0.0;
+
+            songs.add(new Song(title, status, userRating, album, artist, yearReleased, runtimeSeconds));
         }
         
         return songs;

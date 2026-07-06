@@ -7,4 +7,9 @@ public class GamePlaylist {
 	
 	public String title;
 	public List<Game> gamePlaylists = new ArrayList<>();
+	
+	public GamePlaylist(String title, List<Game> gamePlaylists) {
+		this.title = title;
+		this.gamePlaylists = gamePlaylists;
+	}
 }
