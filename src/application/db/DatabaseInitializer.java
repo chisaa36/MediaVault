@@ -15,8 +15,8 @@ public class DatabaseInitializer {
 			// create users table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS users (
-				user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-				username TEXT NOT NULL UNIQUE,
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				username TEXT UNIQUE
 				password TEXT NOT NULL
 			)""");
 			
@@ -24,7 +24,6 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS games (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
@@ -37,7 +36,6 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS songs (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
@@ -51,7 +49,6 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS shows (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
@@ -87,7 +84,7 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS games_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT UNIQUE,
+				title TEXT NOT NULL UNIQUE,
 				
 				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
@@ -97,7 +94,7 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS songs_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT UNIQUE,
+				title TEXT NOT NULL UNIQUE,
 				user_rating REAL,
 				
 				FOREIGN KEY (user_id) REFERENCES users(id)
@@ -108,7 +105,7 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS shows_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT UNIQUE,
+				title TEXT NOT NULL UNIQUE,
 				
 				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
