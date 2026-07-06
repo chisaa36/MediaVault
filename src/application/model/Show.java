@@ -2,20 +2,22 @@ package application.model;
 
 public class Show {
 	
-	public String title;
-	public Status status;
-	public double userRating;
-	public int numOfSeasons;
-	public int numOfEpisodes;
-	public int avgMinsPerEp;
-	public int firstYearAired;
-	public int lastYearAired;
+	private String title;
+	private Status status;
+	private double userRating;
+	private String review;
+	private int numOfSeasons;
+	private int numOfEpisodes;
+	private int avgMinsPerEp;
+	private int firstYearAired;
+	private int lastYearAired;
 	
 	// constructor
 	public Show(String title, Status status, double userRating, int numOfSeasons, int numOfEpisodes, int avgMinsPerEp, int firstYearAired, int lastYearAired) {
 		this.title = title;
 		this.status = status;
 		this.userRating = userRating;
+		this.review = review
 		this.numOfSeasons = numOfSeasons;
 		this.numOfEpisodes = numOfEpisodes;
 		this.avgMinsPerEp = avgMinsPerEp;
