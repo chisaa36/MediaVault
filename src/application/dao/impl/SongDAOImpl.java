@@ -21,7 +21,7 @@ public class SongDAOImpl {
 		this.userId = userId;
 	}
 	
-	void addSong(Song song) throws SQLException {
+	public int addSong(Song song) throws SQLException {
 		
 		int songId = -1;
 		String sql = "INSERT INTO games (title, status, user_rating, developer, avg_playtime_mins) VALUES (?, ?, ?, ?, ?)";
