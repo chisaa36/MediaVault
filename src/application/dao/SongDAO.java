@@ -14,4 +14,5 @@ public interface SongDAO {
 	void deleteSong(String title) throws SQLException;
 	void updateSongRating(String title, int rating) throws SQLException;
 	void addReview(String title, String review) throws SQLException;
+	int getSongId(String title) throws SQLException;
 }

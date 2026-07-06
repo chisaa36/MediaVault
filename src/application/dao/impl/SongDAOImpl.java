@@ -25,10 +25,10 @@ public class SongDAOImpl implements SongDAO {
 	public int addSong(Song song) throws SQLException {
 		
 		int songId = -1;
-		String sql = "INSERT INTO games (title, status, user_rating, developer, avg_playtime_mins) VALUES (?, ?, ?, ?, ?)";
+		String sql = "INSERT INTO songs (title, status, user_rating, album, artist, year_released, runtime_seconds) VALUES (?, ?, ?, ?, ?, ?, ?)";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
-			// add song to 'song' table
+			// add song to 'songs' table
 			stmt.setString(1, song.getTitle());
 			stmt.setString(2, song.getStatus().toDbString());
 			stmt.setDouble(3, song.getUserRating());
@@ -52,9 +52,9 @@ public class SongDAOImpl implements SongDAO {
 		    }
 		}
 		
-		// add song to "all_songs" playlist	if game is added
+		// add song to the user's "all_songs" playlist if the song was inserted
 		if (songId != -1) {
-			sql = "INSERT OR IGNORE INTO games_playlist_items (playlist_id, game_id)"
+			sql = "INSERT OR IGNORE INTO songs_playlist_items (playlist_id, song_id)"
 				+ " VALUES (?, ?)";
 			try (PreparedStatement stmt = conn.prepareStatement(sql)){
 				stmt.setInt(1, 1);
@@ -105,8 +105,8 @@ public class SongDAOImpl implements SongDAO {
 		        SELECT s.id, s.title, s.status, s.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds
 		        FROM songs_playlists sp
 		        JOIN songs_playlist_items spi ON sp.id = spi.playlist_id
-		        JOIN songs s ON spi.game_id = s.id
-		        WHERE g.title = ? AND gp.user_id = ?
+		        JOIN songs s ON spi.song_id = s.id
+		        WHERE s.title = ? AND sp.user_id = ?
 		    """;
 
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -116,13 +116,13 @@ public class SongDAOImpl implements SongDAO {
 		    if (rs.next()) {
 		    	return new Song(rs.getString("title"),
 								Status.fromDbString(rs.getString("status")),
-								rs.getDouble("user_rating"),
-								rs.getString("album"),
-								rs.getString("artist"),
-								rs.getInt("year_released"),
-								rs.getInt("runtime_seconds"));
+							rs.getDouble("user_rating"),
+							rs.getString("album"),
+							rs.getString("artist"),
+							rs.getInt("year_released"),
+							rs.getInt("runtime_seconds"));
 		    } else {
-		    	System.out.println("Game not found.");
+		    	System.out.println("Song not found.");
 		    }
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -140,7 +140,7 @@ public class SongDAOImpl implements SongDAO {
 				FROM songs_playlists sp
 				INNER JOIN songs_playlist_items spi
 				ON sp.id = spi.playlist_id
-				INNER JOIN games s
+				INNER JOIN songs s
 				ON spi.song_id = s.id
 				WHERE sp.user_id = ?
 				""";
@@ -174,9 +174,9 @@ public class SongDAOImpl implements SongDAO {
 				FROM songs_playlists sp
 				INNER JOIN songs_playlist_items spi
 				ON sp.id = spi.playlist_id
-				INNER JOIN games s
-				ON spi.game_id = s.id
-				WHERE sp.user_id = ?
+				INNER JOIN songs s
+				ON spi.song_id = s.id
+				WHERE sp.user_id = ? AND s.artist = ?
 				""";
 
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -202,6 +202,7 @@ public class SongDAOImpl implements SongDAO {
 		return songs;
 	}
 	
+	// TODO: Add getId
 	public void deleteSong(String title) throws SQLException{
 		String sql = "DELETE FROM songs WHERE title = ?";
 	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -227,7 +228,7 @@ public class SongDAOImpl implements SongDAO {
 	
 	public void addReview(String title, String review) throws SQLException{
 		String sql = """
-				UPDATE games 
+				UPDATE songs 
 				SET review = ?
 				WHERE title = ?
 				""";
@@ -237,5 +238,30 @@ public class SongDAOImpl implements SongDAO {
 			stmt.executeUpdate();
 			System.out.println("Song updated: " + title);
 		}
+	}
+	
+	@Override
+	public int getSongId(String title) throws SQLException {
+		String sql = """
+				SELECT s.id
+				FROM songs_playlists sp
+				JOIN songs_playlist_items spi
+				ON sp.id = spi.playlist_id
+				JOIN songs s
+				ON spi.song_id = s.id
+				WHERE sp.user_id = ? AND sp.id = 1 AND s.title = ?
+				""";
+			
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.setInt(1, userId);
+			stmt.setString(2, title);
+				
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt("id");
+			}
+		}
+		
+		return -1;
 	}
 }
