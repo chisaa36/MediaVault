@@ -57,14 +57,14 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 		int gameId = gamesDAOImpl.getGameId(game.getTitle());
 		
 		if (gameId != -1) {
-			String sql = "INSERT INTO games_playlists_items (playlist_id, game_id) VALUES (?, ?)";
+			String sql = "INSERT OR IGNORE INTO games_playlist_items (playlist_id, game_id) VALUES (?, ?)";
 			
 			try (PreparedStatement stmt = conn.prepareStatement(sql)){
-				stmt.setInt(1, userId);
+				stmt.setInt(1, playlistId);
 				stmt.setInt(2, gameId);
 				stmt.executeUpdate();
 				
-		        System.out.println("Game added successfully.");
+				System.out.println("Game added successfully.");
 			} catch (SQLException e) {
 				if (e.getMessage().contains("UNIQUE constraint failed")) {
 			        System.out.println("Game '" + game.getTitle() + "' is already added.");
@@ -85,10 +85,10 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 			int gameId = gamesDAOImpl.getGameId(game.getTitle());
 			
 			if (gameId != -1) {
-				String sql = "INSERT INTO games_playlists_items (playlist_id, game_id) VALUES (?, ?)";
+				String sql = "INSERT OR IGNORE INTO games_playlist_items (playlist_id, game_id) VALUES (?, ?)";
 				
 				try (PreparedStatement stmt = conn.prepareStatement(sql)){
-					stmt.setInt(1, userId);
+					stmt.setInt(1, playlistId);
 					stmt.setInt(2, gameId);
 					stmt.executeUpdate();
 					
@@ -108,7 +108,7 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 
 	@Override
 	public void removeGameFromPlaylist(int playlistId, int gameId) throws SQLException {	
-		String sql = "DELETE FROM games_playlists_items WHERE playlist_id = ?, game_id = ?";
+		String sql = "DELETE FROM games_playlist_items WHERE playlist_id = ? AND game_id = ?";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, playlistId);
@@ -124,13 +124,15 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 		List<Game> items = new ArrayList<Game>();
 		
 		String sql = """
-				SELECT * FROM games_playlists gp
-				JOIN games_playlists_items gpi
-				ON gp.id = gpi.playlist_id
-				JOIN games g
-				ON gpi.game_id = g.id
-				WHERE userId = ? AND playlistId = ?
-				""";
+
+			SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
+			FROM games_playlists gp
+			JOIN games_playlist_items gpi
+			ON gp.id = gpi.playlist_id
+			JOIN games g
+			ON gpi.game_id = g.id
+			WHERE gp.user_id = ? AND gp.id = ?
+			""";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, userId);
@@ -155,19 +157,14 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 	public List<GamePlaylist> getPlaylistsByUser(int userId) throws SQLException {
 		List<GamePlaylist> playlists = new ArrayList<>();
 		
-		String sql = """
-				SELECT * FROM games_playlists gp
-				JOIN games_playlists_items gpi
-				ON gp.id = gpi.playlist_id
-				WHERE userId = ?
-				""";
+		String sql = "SELECT id, title FROM games_playlists WHERE user_id = ?";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, userId);
 			
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
-				List<Game> items = getGamesInPlaylist(rs.getInt("playlist_id"));
+				List<Game> items = getGamesInPlaylist(rs.getInt("id"));
 				
 				GamePlaylist playlist = new GamePlaylist(rs.getString("title"), items);
 				
@@ -180,7 +177,7 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 
 	@Override
 	public void deletePlaylist(int playlistId) throws SQLException {
-		String sql = "DELETE FROM games_playlists_items WHERE playlist_id = ?";
+		String sql = "DELETE FROM games_playlist_items WHERE playlist_id = ?";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, playlistId);
@@ -189,17 +186,4 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 			System.out.println(e.getMessage());
 		}
 	}
-
-	@Override
-	public int createPlaylist(String name, int userId) throws SQLException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public void addGameToPlaylist(int playlistId, int gameId) throws SQLException {
-		// TODO Auto-generated method stub
-		
-	}
-
 }
