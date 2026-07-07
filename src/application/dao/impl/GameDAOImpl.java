@@ -83,6 +83,7 @@ public class GameDAOImpl implements GameDAO{
 				return new Game(rs.getString("title"),
 								Status.fromDbString(rs.getString("status")),
 								rs.getDouble("user_rating"),
+								rs.getString("review"),
 								rs.getString("developer"),
 								rs.getInt("avg_playtime_mins"));
 			}
@@ -111,11 +112,12 @@ public class GameDAOImpl implements GameDAO{
 		    stmt.setInt(2, userId);
 		    ResultSet rs = stmt.executeQuery();
 		    if (rs.next()) {
-		    	return new Game(title,
-		    					Status.fromDbString(rs.getString("status")),
-		    					rs.getDouble("user_rating"),
-		    					rs.getString("developer"),
-		    					rs.getInt("avg_playtime_mins"));
+		    	return new Game(rs.getString("title"),
+								Status.fromDbString(rs.getString("status")),
+								rs.getDouble("user_rating"),
+								rs.getString("review"),
+								rs.getString("developer"),
+								rs.getInt("avg_playtime_mins"));
 		    } else {
 		    	System.out.println("Game not found.");
 		    }
@@ -144,13 +146,12 @@ public class GameDAOImpl implements GameDAO{
 			stmt.setInt(1, userId);
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
-				Game game = new Game(
-					rs.getString("title"),
-					Status.fromDbString(rs.getString("status")),
-					rs.getDouble("user_rating"),
-					rs.getString("developer"),
-					rs.getInt("avg_playtime_mins")
-				);
+				Game game = new Game(rs.getString("title"),
+									 Status.fromDbString(rs.getString("status")),
+									 rs.getDouble("user_rating"),
+									 rs.getString("review"),
+									 rs.getString("developer"),
+									 rs.getInt("avg_playtime_mins"));
 				
 				games.add(game);
 			}

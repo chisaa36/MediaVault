@@ -138,13 +138,14 @@ public class ShowDAOImpl implements ShowDAO {
 			ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
 				return new Show(rs.getString("title"),
-		    					Status.fromDbString(rs.getString("status")),
-		    					rs.getDouble("user_rating"),
-		    					rs.getInt("number_of_seasons"),
-		    					rs.getInt("num_of_episodes"),
-		    					rs.getInt("avg_mins_per_ep"),
-		    					rs.getInt("first_year_aired"),
-		    					rs.getInt("last_year_aired"));
+			   					Status.fromDbString(rs.getString("status")),
+			   					rs.getDouble("user_rating"),
+			   					rs.getString("review"),
+			   					rs.getInt("num_of_seasons"),
+			   					rs.getInt("num_of_episodes"),
+			   					rs.getInt("avg_mins_per_ep"),
+			   					rs.getInt("first_year_aired"),
+			   					rs.getInt("last_year_aired"));
 			}
 			else {
 				System.out.println("Show not found");
@@ -171,14 +172,15 @@ public class ShowDAOImpl implements ShowDAO {
 		    stmt.setInt(2, userId);
 		    ResultSet rs = stmt.executeQuery();
 		    if (rs.next()) {
-		    	return new Show(title,
-		    					Status.fromDbString(rs.getString("status")),
-		    					rs.getDouble("user_rating"),
-		    					rs.getInt("number_of_seasons"),
-		    					rs.getInt("num_of_episodes"),
-		    					rs.getInt("avg_mins_per_ep"),
-		    					rs.getInt("first_year_aired"),
-		    					rs.getInt("last_year_aired"));
+		    	return new Show(rs.getString("title"),
+   					 			Status.fromDbString(rs.getString("status")),
+			   					rs.getDouble("user_rating"),
+			   					rs.getString("review"),
+			   					rs.getInt("num_of_seasons"),
+			   					rs.getInt("num_of_episodes"),
+			   					rs.getInt("avg_mins_per_ep"),
+			   					rs.getInt("first_year_aired"),
+			   					rs.getInt("last_year_aired"));
 		    } else {
 		    	System.out.println("Show not found.");
 		    }
@@ -208,13 +210,14 @@ public class ShowDAOImpl implements ShowDAO {
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				Show show = new Show(rs.getString("title"),
-			    					 Status.fromDbString(rs.getString("status")),
-			    					 rs.getDouble("user_rating"),
-			    					 rs.getInt("number_of_seasons"),
-			    					 rs.getInt("num_of_episodes"),
-			    					 rs.getInt("avg_mins_per_ep"),
-			    					 rs.getInt("first_year_aired"),
-			    					 rs.getInt("last_year_aired"));
+			   					Status.fromDbString(rs.getString("status")),
+			   					rs.getDouble("user_rating"),
+			   					rs.getString("review"),
+			   					rs.getInt("num_of_seasons"),
+			   					rs.getInt("num_of_episodes"),
+			   					rs.getInt("avg_mins_per_ep"),
+			   					rs.getInt("first_year_aired"),
+			   					rs.getInt("last_year_aired"));
 				
 				shows.add(show);
 			}
@@ -639,13 +642,14 @@ public class ShowDAOImpl implements ShowDAO {
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				Show show = new Show(rs.getString("title"),
-					   				 Status.fromDbString(rs.getString("status")),
-					   				 rs.getDouble("user_rating"),
-					   				 rs.getInt("number_of_seasons"),
-					   				 rs.getInt("num_of_episodes"),
-					   				 rs.getInt("avg_mins_per_ep"),
-					   				 rs.getInt("first_year_aired"),
-					   				 rs.getInt("last_year_aired")); 
+			   					Status.fromDbString(rs.getString("status")),
+			   					rs.getDouble("user_rating"),
+			   					rs.getString("review"),
+			   					rs.getInt("num_of_seasons"),
+			   					rs.getInt("num_of_episodes"),
+			   					rs.getInt("avg_mins_per_ep"),
+			   					rs.getInt("first_year_aired"),
+			   					rs.getInt("last_year_aired"));
 				
 				shows.add(show);
 			}
@@ -673,13 +677,15 @@ public class ShowDAOImpl implements ShowDAO {
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
 				Show show = new Show(rs.getString("title"),
-				   				    Status.fromDbString(rs.getString("status")),
-				   				    rs.getDouble("user_rating"),
-				   				    rs.getInt("number_of_seasons"),
-				   				    rs.getInt("num_of_episodes"),
-				   				    rs.getInt("avg_mins_per_ep"),
-				   				    rs.getInt("first_year_aired"),
-				   				    rs.getInt("last_year_aired"));
+			   					Status.fromDbString(rs.getString("status")),
+			   					rs.getDouble("user_rating"),
+			   					rs.getString("review"),
+			   					rs.getInt("num_of_seasons"),
+			   					rs.getInt("num_of_episodes"),
+			   					rs.getInt("avg_mins_per_ep"),
+			   					rs.getInt("first_year_aired"),
+			   					rs.getInt("last_year_aired"));
+				
 				shows.add(show);
 			}
 		} catch (SQLException e) {

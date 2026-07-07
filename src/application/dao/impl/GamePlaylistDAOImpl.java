@@ -143,6 +143,7 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 				Game game = new Game(rs.getString("title"),
 									 Status.fromDbString(rs.getString("status")),
 									 rs.getDouble("user_rating"),
+									 rs.getString("review"),
 									 rs.getString("developer"),
 									 rs.getInt("avg_playtime_mins"));
 				
