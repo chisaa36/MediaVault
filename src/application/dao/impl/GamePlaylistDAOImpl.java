@@ -17,12 +17,12 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 
 	private Connection conn;
 	private int userId;
-	private GamesDAOImpl gamesDAOImpl;
+	private GameDAOImpl gamesDAOImpl;
 	
 	public GamePlaylistDAOImpl(Connection conn, int userId) {
 		this.conn = conn;
 		this.userId = userId;
-		this.gamesDAOImpl = new GamesDAOImpl(conn, userId);
+		this.gamesDAOImpl = new GameDAOImpl(conn, userId);
 	}
 	
 	public int createPlaylist(String name) throws SQLException {

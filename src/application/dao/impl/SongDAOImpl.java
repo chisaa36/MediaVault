@@ -185,8 +185,8 @@ public class SongDAOImpl implements SongDAO {
 		        SELECT s.id, s.title, s.status, s.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, s.review
 		        FROM songs_playlists sp
 		        JOIN songs_playlist_items spi ON sp.id = spi.playlist_id
-		        JOIN songs s ON spi.songs_id = s.id
-		        WHERE g.title = ? AND gp.user_id = ?
+		        JOIN songs s ON spi.song_id = s.id
+		        WHERE s.title = ? AND sp.user_id = ?
 		    """;
 
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -213,7 +213,6 @@ public class SongDAOImpl implements SongDAO {
 	}
 	
 	public List<Song> getSongsByUser(int userId) throws SQLException {
-
 	    List<Song> songs = new ArrayList<>();
 
 	    String sql = """
@@ -273,8 +272,8 @@ public class SongDAOImpl implements SongDAO {
 				INNER JOIN songs_playlist_items spi
 				ON sp.id = spi.playlist_id
 				INNER JOIN songs s
-				ON spi.songs_id = s.id
-				WHERE sp.user_id = ?
+				ON spi.song_id = s.id
+				WHERE sp.user_id = ? AND s.artist = ?
 				""";
 
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -313,7 +312,6 @@ public class SongDAOImpl implements SongDAO {
 	            WHERE user_id = ? AND title = 'all_songs'
 	        )
 	    """;
-
 	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 	        stmt.setString(1, title);
 	        stmt.setString(2, artist);
@@ -352,7 +350,6 @@ public class SongDAOImpl implements SongDAO {
 	        stmt.executeUpdate();
 	    }
 	}
-	
 	public void addReview(int userId, Song song, String review) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items

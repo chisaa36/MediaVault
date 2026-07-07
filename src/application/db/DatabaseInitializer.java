@@ -51,6 +51,11 @@ public class DatabaseInitializer {
 				title TEXT NOT NULL UNIQUE,
 				status TEXT,
 				user_rating REAL,
+				num_of_seasons INTEGER,
+				num_of_episodes INTEGER,
+				avg_mins_per_ep INTEGER,
+				first_year_aired INTEGER,
+				last_year_aired INTEGER,
 				review TEXT
 			)""");
 			
@@ -58,11 +63,11 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS seasons (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				shows_id INTEGER NOT NULL,
+				show_id INTEGER NOT NULL,
 				title TEXT,
 				status TEXT,
 				
-				FOREIGN KEY (shows_id) REFERENCES shows(id)
+				FOREIGN KEY (show_id) REFERENCES shows(id)
 			)""");
 			
 			// create episodes table
@@ -83,7 +88,8 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS games_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT NOT NULL UNIQUE,
+				title TEXT NOT NULL,
+				UNIQUE (user_id, title),
 				
 				FOREIGN KEY (user_id) REFERENCES users(user_id)
 			)""");
@@ -93,8 +99,9 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS songs_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT NOT NULL UNIQUE,
+				title TEXT NOT NULL,
 				user_rating REAL,
+				UNIQUE (user_id, title),
 				
 				UNIQUE(user_id, title),
 				FOREIGN KEY (user_id) REFERENCES users(user_id)
@@ -105,7 +112,8 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS shows_playlists (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
-				title TEXT NOT NULL UNIQUE,
+				title TEXT NOT NULL,
+				UNIQUE (user_id, title),
 				
 				FOREIGN KEY (user_id) REFERENCES users(user_id)
 			)""");
@@ -130,20 +138,20 @@ public class DatabaseInitializer {
 			    user_rating REAL,
 			    review TEXT,
 				
-				PRIMARY KEY (playlist_id, songs_id),
+				PRIMARY KEY (playlist_id, song_id),
 				FOREIGN KEY (playlist_id) REFERENCES songs_playlists(id),
-				FOREIGN KEY (songs_id) REFERENCES songs(id)
+				FOREIGN KEY (song_id) REFERENCES songs(id)
  			)""");
 			
 			// create shows_playlist_items table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS shows_playlist_items (
 				playlist_id INTEGER NOT NULL,
-				shows_id INTEGER NOT NULL,
+				show_id INTEGER NOT NULL,
 				
-				PRIMARY KEY (playlist_id, shows_id),
+				PRIMARY KEY (playlist_id, show_id),
 				FOREIGN KEY (playlist_id) REFERENCES shows_playlists(id),
-				FOREIGN KEY (shows_id) REFERENCES shows(id)
+				FOREIGN KEY (show_id) REFERENCES shows(id)
 			)""");
 			
 			// create genres table
@@ -167,22 +175,22 @@ public class DatabaseInitializer {
 			// create songs_genres table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS songs_genres (
-				songs_id INTEGER NOT NULL,
+				song_id INTEGER NOT NULL,
 				genre_id INTEGER NOT NULL,
 				
-				PRIMARY KEY (songs_id, genre_id),
-				FOREIGN KEY (songs_id) REFERENCES songs(id),
+				PRIMARY KEY (song_id, genre_id),
+				FOREIGN KEY (song_id) REFERENCES songs(id),
 				FOREIGN KEY (genre_id) REFERENCES genres(id)
 			)""");
 			
 			// create shows_genres table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS shows_genres (
-				shows_id INTEGER NOT NULL,
+				show_id INTEGER NOT NULL,
 				genre_id INTEGER NOT NULL,
 				
-				PRIMARY KEY (shows_id, genre_id),
-				FOREIGN KEY (shows_id) REFERENCES shows(id),
+				PRIMARY KEY (show_id, genre_id),
+				FOREIGN KEY (show_id) REFERENCES shows(id),
 				FOREIGN KEY (genre_id) REFERENCES genres(id)
 			)""");
 			System.out.println("Tables initialized.");
@@ -193,13 +201,14 @@ public class DatabaseInitializer {
 	}
 	
 	/*
-	public static int registerUser(Connection conn, String username) throws SQLException {
+	public static int registerUser(Connection conn, String username, String password) throws SQLException {
 		int userId = -1;
 	
-		// add user to 'users' table
-		String sql = "INSERT INTO users (username) VALUES (?)";
+		// add user to `users` table
+		String sql = "INSERT INTO users (username, password) VALUES (?, ?)";
 		try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 			pstmt.setString(1, username);
+			pstmt.setString(2, password);
 			pstmt.executeUpdate();
 			ResultSet keys = pstmt.getGeneratedKeys();
 	        if (keys.next()) {
