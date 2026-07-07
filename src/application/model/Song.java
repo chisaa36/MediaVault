@@ -9,8 +9,9 @@ public class Song {
 	private String artist;
 	private int yearReleased;
 	private int runtimeSeconds;
+	private String review;
 
-    public Song(String title, Status status, double userRating, String album, String artist, int yearReleased, int runtimeSeconds) {
+    public Song(String title, Status status, double userRating, String album, String artist, int yearReleased, int runtimeSeconds, String review) {
         this.title = title;
         this.status = status;
         this.userRating = userRating;
@@ -18,6 +19,7 @@ public class Song {
         this.artist = artist;
         this.yearReleased = yearReleased;
         this.runtimeSeconds = runtimeSeconds;
+        this.review = review;
     }
 
     public String getTitle() {
@@ -28,8 +30,26 @@ public class Song {
     	return status;
     }
     
+    public void setStatus(Status status) {
+    	this.status = status;
+    }
+    
     public double getUserRating() {
     	return userRating;
+    }
+    
+    public String getUserRatingString() {
+    	
+    	if(status == Status.COMPLETED)
+    	{
+    		return String.valueOf(userRating);
+    	}
+    	
+    	return "complete to rate";
+    }
+    
+    public void setUserRating(double userRating) {
+    	this.userRating = userRating;
     }
     
     public String getAlbum() {
@@ -53,5 +73,26 @@ public class Song {
         int seconds = runtimeSeconds%60;
 
         return String.format("%d:%02d", minutes, seconds);
+    }
+    
+    public String getReview() {
+    	return review;
+    }
+    
+    public void setReview(String review) {
+    	this.review = review;
+    }
+    
+    public String getReviewedStatus(String review) {
+    	
+    	if(status == Status.COMPLETED)
+    	{
+	    	if(review.equals(""))
+	    		return "no";
+	    	else
+	    		return "yes";
+    	}
+    	
+    	return "complete to review";
     }
 }

@@ -3,15 +3,17 @@ import java.sql.SQLException;
 import java.util.List;
 
 import application.model.Song;
+import application.model.Status;
 
 public interface SongDAO {
 	
-	int addSong(Song song) throws SQLException;
+	int addSong(Song song, int userId) throws SQLException;
 	Song getSongById(int songId) throws SQLException;
 	Song getSongByTitle(String title) throws SQLException;
 	List<Song> getSongsByUser(int userId) throws SQLException;
 	List<Song> getSongsByArtist(String artist, int userId) throws SQLException;
-	void deleteSong(String title) throws SQLException;
-	void updateSongRating(String title, int rating) throws SQLException;
-	void addReview(String title, String review) throws SQLException;
+	void deleteSong(int userId, String title, String artist) throws SQLException;
+	void updateSongRating(int userId, Song song, double rating) throws SQLException;
+	void addReview(int userId, Song song, String review) throws SQLException;
+	void updateStatus(int userId, Song song, Status newStatus) throws SQLException;
 }

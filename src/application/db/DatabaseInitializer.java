@@ -1,8 +1,8 @@
 package application.db;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+//import java.sql.PreparedStatement;
+//import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -15,8 +15,8 @@ public class DatabaseInitializer {
 			// create users table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS users (
-				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				username TEXT UNIQUE
+				user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+				username TEXT UNIQUE,
 				password TEXT NOT NULL
 			)""");
 			
@@ -36,13 +36,12 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS songs (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
-				title TEXT NOT NULL UNIQUE,
-				status TEXT,
-				user_rating REAL,
+				title TEXT NOT NULL,
+				album TEXT,
 				artist TEXT,
 				year_released INTEGER,
 				runtime_seconds INTEGER,
-				review TEXT
+				UNIQUE(title, artist)
 			)""");
 			
 			// create shows table
@@ -86,7 +85,7 @@ public class DatabaseInitializer {
 				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL UNIQUE,
 				
-				FOREIGN KEY (user_id) REFERENCES users(id)
+				FOREIGN KEY (user_id) REFERENCES users(user_id)
 			)""");
 			
 			// create songs_playlists table
@@ -97,7 +96,8 @@ public class DatabaseInitializer {
 				title TEXT NOT NULL UNIQUE,
 				user_rating REAL,
 				
-				FOREIGN KEY (user_id) REFERENCES users(id)
+				UNIQUE(user_id, title),
+				FOREIGN KEY (user_id) REFERENCES users(user_id)
 			)""");
 			
 			// create shows_playlists table
@@ -107,7 +107,7 @@ public class DatabaseInitializer {
 				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL UNIQUE,
 				
-				FOREIGN KEY (user_id) REFERENCES users(id)
+				FOREIGN KEY (user_id) REFERENCES users(user_id)
 			)""");
 			
 			// create games_playlist_items table
@@ -125,7 +125,10 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS songs_playlist_items (
 				playlist_id INTEGER NOT NULL,
-				songs_id INTEGER NOT NULL,
+			    songs_id INTEGER NOT NULL,
+			    status TEXT,
+			    user_rating REAL,
+			    review TEXT,
 				
 				PRIMARY KEY (playlist_id, songs_id),
 				FOREIGN KEY (playlist_id) REFERENCES songs_playlists(id),
@@ -189,10 +192,11 @@ public class DatabaseInitializer {
 		}
 	}
 	
+	/*
 	public static int registerUser(Connection conn, String username) throws SQLException {
 		int userId = -1;
 	
-		// add user to `users` table
+		// add user to 'users' table
 		String sql = "INSERT INTO users (username) VALUES (?)";
 		try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 			pstmt.setString(1, username);
@@ -243,4 +247,5 @@ public class DatabaseInitializer {
 		
 		return userId;
 	}
+	*/
 }

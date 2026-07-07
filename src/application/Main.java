@@ -1,8 +1,11 @@
 package application;
 
 import java.util.List;
+import java.util.ArrayList;
 import application.api.SpotifyClient;
 import application.model.Song;
+import application.model.Status;
+import application.dao.impl.SongDAOImpl;
 
 import application.db.DatabaseConnection;
 import application.db.DatabaseInitializer;
@@ -55,7 +58,7 @@ public class Main {
 						
 						securityCheck = userDAO.login(username, password);
 						
-						if(userDAO.login(username, password))
+						if(securityCheck)
 						{
 							System.out.println("= Login successful!");
 							System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =\n");
@@ -74,7 +77,7 @@ public class Main {
 			    	if(!securityCheck)
 			    	{
 			    		System.out.println("\n    Too many attempts. Redirecting to login menu...\n");
-			    		checkCtr = 1;
+			    		checkCtr = 0;
 			    	}
 			    }
 			    else if(choice.equals("2"))
@@ -95,6 +98,9 @@ public class Main {
 				    	
 				    	if(securityCheck)
 				    	{
+				    		userDAO.addUser(username, password);
+				    		// DatabaseInitializer.registerUser(conn, username);
+				    		
 				    		System.out.println("= Registration successful!");
 							System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =\n");
 				    	}
@@ -116,7 +122,7 @@ public class Main {
 			    	if(!securityCheck)
 			    	{
 			    		System.out.println("\n    Too many attempts. Redirecting to login menu...\n");
-			    		checkCtr = 1;
+			    		checkCtr = 0;
 			    	}
 			    }
 			    else if(choice.equals("X"))
@@ -126,7 +132,7 @@ public class Main {
 			    }
 			    else
 			    {
-			    	System.out.println("*\n* Invalid Input!");
+			    	System.out.println("*\n* Invalid input! Please try again.");
 			    	System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
 			    }
 			    
@@ -163,6 +169,7 @@ public class Main {
 		    }
 		    else if(choice.equals("2"))
 		    {
+		    	System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
 		    	getSongVault(user_id, conn, scanner);
 		    }
 		    else if(choice.equals("3"))
@@ -179,7 +186,7 @@ public class Main {
 		    }
 		    else
 		    {
-		    	System.out.println("*\n* Invalid Input!");
+		    	System.out.println("*\n* Invalid input! Please try again.");
 		    	System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
 		    }
 		    
@@ -197,15 +204,18 @@ public class Main {
 	
 	public static void getSongVault(int user_id, Connection conn, Scanner scanner){
 		
-		int ctr, trackNo = 0, songChoice = -1, resultSize;
-		//SongDAO songDAO = new SongDAO(conn);
-		String choice, choice2, choice3, search;
+		int ctr, songChoice = -1, resultSize, yearReleased, runtimeSeconds, triggerValue;
+		SongDAOImpl songDAO = new SongDAOImpl(conn, user_id);
+		String choice, choice2, choice3, choice4, choice5, choice6, search, title, album, artist, review = "";
+		double rating = 0.0;
+		Status status = Status.PLANNED;
+		List<Song> completed = new ArrayList<>(), inProgress = new ArrayList<>(), planned = new ArrayList<>(), allSongs = new ArrayList<>(); 
 		
 		SpotifyClient spotifyClient = new SpotifyClient("266e17b3bb8e432d82b803598192fc5f", "f38ada98c91f4bf9bf6ed4f4490d7b12");
 		
 		do
 		{
-			System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+			
 	    	System.out.println("\n= = = = = = = = = = = SONG  VAULT = = = = = = = = = = =");
 	    	System.out.println("= [1] My Songs");
 	    	System.out.println("= [2] My Playlists");
@@ -218,31 +228,46 @@ public class Main {
 		    	do
 		    	{
 			    	System.out.println("= - - - - - - - - - =  MY  SONGS  = - - - - - - - - - =");
-			    	System.out.println("= [1] Completed/Reviewed");
+			    	System.out.println("= [1] Completed");
 			    	System.out.println("= [2] In Progress");
 			    	System.out.println("= [3] Planned");
 			    	System.out.println("= [*] View All My Songs");
 			    	System.out.println("= [+] Add Song");
-			    	System.out.println("= [-] Remove Song");
 			    	System.out.println("= [<] Back to Song Vault");
 			    	System.out.print("=\n= Enter your choice: ");
 				    choice2 = scanner.nextLine();
 				    
 				    if(choice2.equals("1"))
-				    {
+				    {	
+				    	System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =");
 				    	
+				    	triggerValue = 1;
+				    	
+				    	doSongEdits(user_id, songDAO, completed, scanner, triggerValue);
 				    }
 				    else if(choice2.equals("2"))
 				    {
+				    	System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =");
 				    	
+				    	triggerValue = 2;
+				    	
+				    	doSongEdits(user_id, songDAO, inProgress, scanner, triggerValue);
 				    }
 				    else if(choice2.equals("3"))
 				    {
+				    	System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =");
 				    	
+				    	triggerValue = 3;
+				    	
+				    	doSongEdits(user_id, songDAO, planned, scanner, triggerValue);
 				    }
 				    else if(choice2.equals("*"))
 				    {
+				    	System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =");
 				    	
+				    	triggerValue = 4;
+				    	
+				    	doSongEdits(user_id, songDAO, allSongs, scanner, triggerValue);
 				    }
 				    else if(choice2.equals("+"))
 				    {
@@ -271,6 +296,7 @@ public class Main {
 					            	
 					                System.out.printf("| %-3d | %-23s | %-6s | %-20s |%n", ctr+1, fitToSpace(song.getTitle(), 23), song.getRuntimeString(), fitToSpace(song.getArtist(), 20));
 					            }
+					            
 					            System.out.println("-----------------------------------------------------------------");
 					            System.out.println();
 					            System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =");
@@ -289,7 +315,7 @@ public class Main {
 					            
 					            if(choice3.equals("<"))
 					            {
-					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =");
 					            }
 					            else if(choice3.equals("?"))
 					            {
@@ -298,24 +324,209 @@ public class Main {
 					            else if(choice3.equals("+"))
 					            {
 					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+					            	
+					            	do
+					            	{
+						            	System.out.print(" Enter Song Title: ");
+						            	title = scanner.nextLine();
+						            	System.out.print(" Enter Album Title: ");
+						            	album = scanner.nextLine();
+						            	System.out.print(" Enter Artist's Name: ");
+						            	artist = scanner.nextLine();
+						            	System.out.print(" Enter Year Released: ");
+						            	yearReleased = Integer.parseInt(scanner.nextLine());
+						            	System.out.print(" Enter Runtime in Seconds: ");
+						            	runtimeSeconds = Integer.parseInt(scanner.nextLine());
+						            	
+						            	System.out.println();
+						            	
+						            	do
+						            	{
+							            	System.out.println(" - {SONG STATUS}");
+							            	System.out.println(" - [1] Completed");
+							            	System.out.println(" - [2] In Progress");
+							            	System.out.println(" - [3] Planned");
+							            	System.out.println(" - [X] Redo Manual Add");
+							            	System.out.print(" Input Status: ");
+							            	choice4 = scanner.nextLine();
+							            	
+							            	if(choice4.equals("1"))
+							            	{
+							            		System.out.print(" Input Personal Rating: ");
+							            		
+							            		try {
+							            	        rating = Double.parseDouble(scanner.nextLine());
+
+							            	        if (rating < 1 || rating > 10) {
+							            	        	System.out.println(" Rating must be between 1 and 10.\n");
+							            	        	choice4 = "WRONG";
+							            	        }
+							            	        else
+							            	        {
+							            	        	status = Status.COMPLETED;
+							            	        	
+							            	        	do
+							            	        	{
+							            	        		review = "";
+							            	        		
+								            	        	System.out.println(" - ");
+								            	        	System.out.println(" - {REVIEW SONG?}");
+								            	        	System.out.println(" - [1] Yes");
+								            	        	System.out.println(" - [2] No");
+								            	        	System.out.print(" - Enter your choice: ");
+								            	        	choice6 = scanner.nextLine();
+								            	        	
+								            	        	if(choice6.equals("1"))
+								            	        	{
+								            	        		System.out.println(" - ");
+								            	        		System.out.print(" - Enter Review: ");
+								            	        		review = scanner.nextLine();
+								            	        		
+								            	        		System.out.println(" - ");
+								            	        	}
+								            	        	else if(choice6.equals("2"))
+								            	        	{
+								            	        		System.out.println(" - ");
+								            	        	}
+								            	        	else
+								            	        	{
+								            	        		System.out.println(" - ");
+								            	        		System.out.println(" - Invalid input. Please try again.");
+								            	        	}
+								            	        	
+							            	        	} while(!choice6.equals("1") && !choice6.equals("2"));
+							            	        }
+							            	    }
+							            		catch (NumberFormatException e) {
+							            	        System.out.println(" Please enter a valid number.\n");
+							            	        choice4 = "WRONG";
+							            	    }
+							            	}
+							            	else if(choice4.equals("2"))
+							            	{
+							            		status = Status.IN_PROGRESS;
+							            	}
+							            	else if(choice4.equals("3"))
+							            	{
+							            		status = Status.PLANNED;
+							            	}
+							            	else if(choice4.equals("X"))
+							            	{
+							            		System.out.println();
+							            	}
+							            	else
+							            	{
+							            		System.out.println(" Invalid input! Please try again.\n");
+							            	}
+						            	} while(!choice4.equals("1") && !choice4.equals("2") && !choice4.equals("3"));
+						            	
+					            	} while(choice4.equals("X") && !choice4.equals("1") && !choice4.equals("2") && !choice4.equals("3"));
+					            	
+					            	songDAO.addSong(new Song(title, status, rating, album, artist, yearReleased, runtimeSeconds, review), user_id);
+					            	
+					            	choice3 = "<";
 					            }
 					            else if(1 <= songChoice && songChoice <= resultSize)
 					            {
 					            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
 					            	
+					            	do
+					            	{
+						            	System.out.println(" - {SONG STATUS}");
+						            	System.out.println(" - [1] Completed");
+						            	System.out.println(" - [2] In Progress");
+						            	System.out.println(" - [3] Planned");
+						            	System.out.println(" - ");
+						            	System.out.print(" - Input Status: ");
+						            	choice5 = scanner.nextLine();
+						            	
+						            	if(choice5.equals("1"))
+						            	{
+						            		System.out.print(" - Input Personal Rating: ");
+						            		
+						            		try {
+						            	        rating = Double.parseDouble(scanner.nextLine());
+
+						            	        if (rating < 1 || rating > 10)
+						            	        {
+						            	        	System.out.println(" - Rating must be between 1 and 10.\n");
+						            	        	choice5 = "WRONG";
+						            	        }
+						            	        else
+						            	        {
+						            	        	status = Status.COMPLETED;
+						            	        	
+						            	        	do
+						            	        	{
+						            	        		review = "";
+						            	        		
+							            	        	System.out.println(" - ");
+							            	        	System.out.println(" - {REVIEW SONG?}");
+							            	        	System.out.println(" - [1] Yes");
+							            	        	System.out.println(" - [2] No");
+							            	        	System.out.print(" - Enter your choice: ");
+							            	        	choice6 = scanner.nextLine();
+							            	        	
+							            	        	if(choice6.equals("1"))
+							            	        	{
+							            	        		System.out.println(" - ");
+							            	        		System.out.print(" - Enter Review: ");
+							            	        		review = scanner.nextLine();
+							            	        		
+							            	        		System.out.println(" - ");
+							            	        	}
+							            	        	else if(choice6.equals("2"))
+							            	        	{
+							            	        		System.out.println(" - ");
+							            	        	}
+							            	        	else
+							            	        	{
+							            	        		System.out.println(" - ");
+							            	        		System.out.println(" - Invalid input. Please try again.");
+							            	        	}
+							            	        	
+						            	        	} while(!choice6.equals("1") && !choice6.equals("2"));
+						            	        }
+						            	    }
+						            		catch (NumberFormatException e) {
+						            	        System.out.println(" - Please enter a valid number.\n");
+						            	        choice5 = "WRONG";
+						            	    }
+						            	}
+						            	else if(choice5.equals("2"))
+						            	{
+						            		status = Status.IN_PROGRESS;
+						            	}
+						            	else if(choice5.equals("3"))
+						            	{
+						            		status = Status.PLANNED;
+						            	}
+						            	else
+						            	{
+						            		System.out.println(" - Invalid input! Please try again.\n");
+						            	}
+					            	} while(!choice5.equals("1") && !choice5.equals("2") && !choice5.equals("3"));
 					            	
+					            	Song song = results.get(songChoice-1);
+					            	
+					            	song.setStatus(status);
+					            	song.setUserRating(rating);
+					            	song.setReview(review);
+					            	
+					            	songDAO.addSong(song, user_id);
 					            	
 					            	choice3 = "<";
 					            }
 					            else
 					            {
-					            	System.out.println("=\n= Invalid Input!");
+					            	System.out.println("=\n= Invalid input! Please try again.");
 							    	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
 					            }
 				            
 				        	} while(!choice3.equals("<"));
 
-				        } catch (Exception e) {
+				        }
+				        catch (Exception e) {
 				            System.out.println("Could not connect to Spotify.");
 				            e.printStackTrace();
 				        }
@@ -323,17 +534,13 @@ public class Main {
 				        System.out.println();
 				        
 				    }
-				    else if(choice2.equals("-"))
-				    {
-				    	
-				    }
 				    else if(choice2.equals("<"))
 				    {
-				    	
+				    	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =");
 				    }
 				    else
 				    {
-				    	
+				    	System.out.println("=\n= Invalid input! Please try again.");
 				    }
 		    	} while(!choice2.equals("<"));
 		    }
@@ -353,8 +560,8 @@ public class Main {
 		    }
 		    else
 		    {
-		    	System.out.println("=\n= Invalid Input!");
-		    	System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =\n");
+		    	System.out.println("=\n= Invalid input! Please try again.");
+		    	System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =");
 		    }
 		    
 		} while(!choice.equals("<"));
@@ -420,5 +627,553 @@ public class Main {
 	    }
 
 	    return text.substring(0, width - 3) + "...";
+	}
+	
+	public static void printSongs(List<Song> songs) {
+
+	    System.out.println();
+        System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
+        System.out.printf("| %-3s | %-23s | %-6s | %-4s | %-17s | %-13s | %-16s | %-18s |%n", "No.", "Title", "Length", "Year", "Artist", "Status", "My Rating", "Reviewed");
+        System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
+
+	    int ctr = 1;
+
+	    for (Song song : songs)
+	    	System.out.printf("| %-3d | %-23s | %-6s | %-4s | %-17s | %-13s | %-16s | %-18s |%n", ctr++, fitToSpace(song.getTitle(), 23), song.getRuntimeString(), String.valueOf(song.getYearReleased()), fitToSpace(song.getArtist(), 20), song.getStatus().toDbString(), song.getUserRatingString(), song.getReviewedStatus(song.getReview()));
+
+	    System.out.println("-----------------------------------------------------------------------------------------------------------------------------\n");
+	}
+	
+	public static void doSongEdits(int user_id, SongDAOImpl songDAO, List<Song> songs, Scanner scanner, int triggerValue) {
+		
+		double rating = 0.0;
+		String choice7, choice8, choice5, choice4, choice6, review; 
+		int songChoice = 0;
+		
+		do
+    	{
+    		songs.clear();
+    		
+    		try {
+    			
+    			if(triggerValue == 1)
+    			{
+		            for (Song song : songDAO.getSongsByUser(user_id))
+		                if (song.getStatus() == Status.COMPLETED)
+		                    songs.add(song);
+    			}
+    			else if(triggerValue == 2)
+    			{
+    				for (Song song : songDAO.getSongsByUser(user_id))
+		                if (song.getStatus() == Status.IN_PROGRESS)
+		                    songs.add(song);
+    			}
+    			else if(triggerValue == 3)
+    			{
+    				for (Song song : songDAO.getSongsByUser(user_id))
+		                if (song.getStatus() == Status.PLANNED)
+		                    songs.add(song);
+    			}
+    			else if(triggerValue == 4)
+    			{
+    				for (Song song : songDAO.getSongsByUser(user_id))
+    					songs.add(song);
+    			}
+
+	            printSongs(songs);
+
+	        }
+	    	catch (SQLException e) {
+	            System.out.println("Could not load songs.");
+	        }
+    		
+    		if(triggerValue == 1)
+    		{
+    			System.out.println("= - - - - - - - - = COMPLETED SONGS = - - - - - - - - =");
+    		}
+    		else if(triggerValue == 2)
+    		{
+    			System.out.println("= - - - - - - - = SONGS  IN  PROGRESS = - - - - - - - =");
+    		}
+    		else if(triggerValue == 3)
+    		{
+    			System.out.println("= - - - - - - - - =  PLANNED SONGS  = - - - - - - - - =");
+    		}
+    		else if(triggerValue == 4)
+    		{
+    			System.out.println("= - - - - - - - - - =  ALL SONGS  = - - - - - - - - - =");
+    		}
+    		System.out.println("= [#] View/Update Song Status (Input the Track No.)");
+    		System.out.println("= [<] Back to My Songs");
+    		System.out.println("= ");
+    		System.out.print("= Enter your choice: ");
+    		choice7 = scanner.nextLine();
+    		
+    		try {
+            	songChoice = Integer.parseInt(choice7);
+            }
+            catch (NumberFormatException e) {
+            }
+    		
+    		if(choice7.equals("<"))
+    		{
+    			System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+    		}
+    		else if(1 <= songChoice && songChoice <= songs.size())
+    		{
+    			System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+    			
+    			Song song = songs.get(songChoice-1);  
+    			
+    			do
+    			{
+	    			System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+	    			System.out.println("  * " + song.getTitle() + " by " + song.getArtist());
+	    			System.out.println("  * - - - - - - - - - - - - - - - - - - - - - - - - - *");
+	    			System.out.println("  * Year Released: " + String.valueOf(song.getYearReleased()));
+	    			System.out.println("  * Status: " + song.getStatus().toDbString());
+	    			
+	    			if(song.getStatus() == Status.COMPLETED)
+	    			{
+	    				System.out.println("  * My Rating: " + song.getUserRatingString());
+	    				if(song.getReview().equals(""))
+		    				System.out.println("  * My Review: Unreviewed");
+		    			else
+		    				System.out.println("  * My Review: " + song.getReview());
+	    			}
+	    			else if(song.getStatus() == Status.PLANNED || song.getStatus() == Status.IN_PROGRESS)
+	    			{
+	    				System.out.println("  * My Rating: /-complete to rate song-/");
+	    				System.out.println("  * My Review: /-complete to review song-/");
+	    			}
+	    			
+	    			System.out.println("  * - - - - - - - - - - - - - - - - - - - - - - - - - *");
+	    			System.out.println("  * [1] Change Status");
+	    			
+	    			if(song.getStatus() == Status.COMPLETED)
+	    			{
+		    			System.out.println("  * [2] Change Rating");
+		    			
+		    			if(song.getReview().equals(""))
+		    				System.out.println("  * [3] Add Review");
+		    			else
+		    				System.out.println("  * [3] Change Review");
+	    			}
+	    			
+	    			System.out.println("  * [-] Remove Song");
+	    			
+	    			if(triggerValue == 1)
+	    			{
+	    				System.out.println("  * [<] Back to Completed Songs");
+	    			}
+	    			else if(triggerValue == 2)
+	    			{
+	    				System.out.println("  * [<] Back to Songs in Progress");
+	    			}
+	    			else if(triggerValue == 3)
+	    			{
+	    				System.out.println("  * [<] Back to Planned Songs");
+	    			}
+	    			else if(triggerValue == 4)
+	    			{
+	    				System.out.println("  * [<] Back to All Songs");
+	    			}
+	    			
+	    			System.out.println("  * ");
+	    			System.out.print("  * Enter your choice: ");
+	    			choice8 = scanner.nextLine();
+	    			
+	    			if(choice8.equals("1"))
+	    			{
+	    				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
+	    				
+	    				do
+		            	{
+			            	System.out.println("  - {CHANGE SONG STATUS}");
+			            	
+			            	if(song.getStatus() == Status.COMPLETED)
+			            	{
+			            		System.out.println("  - [1] In Progress");
+			            		System.out.println("  - [2] Planned");
+			            	}
+			            	else if(song.getStatus() == Status.IN_PROGRESS)
+			            	{
+			            		System.out.println("  - [1] Completed");
+			            		System.out.println("  - [2] Planned");
+			            	}
+			            	else if(song.getStatus() == Status.PLANNED)
+			            	{
+			            		System.out.println("  - [1] Completed");
+			            		System.out.println("  - [2] In Progress");
+			            	}
+			            	
+			            	System.out.println("  - [<] Back to Song " + songChoice);
+			            	System.out.println("  - ");
+			            	System.out.print("  - Input Status: ");
+			            	choice5 = scanner.nextLine();
+			            	
+			            	if(choice5.equals("1"))
+			            	{
+			            		if(song.getStatus() == Status.COMPLETED)
+			            		{
+				            		try {
+				            		    songDAO.updateStatus(user_id, song, Status.IN_PROGRESS);
+	
+				            		    song.setStatus(Status.IN_PROGRESS);
+				            		    song.setUserRating(0.0);
+				            		    song.setReview("");
+	
+				            		    System.out.println("  - Status updated!");
+				            		    choice5 = "<";
+	
+				            		}
+				            		catch (SQLException e) {
+				            		    System.out.println("  - Could not update status.\n");
+				            		    System.out.println(e.getMessage());
+				            		}
+			            		}
+			            		else if(song.getStatus() == Status.IN_PROGRESS)
+			            		{
+			            			do
+			            			{
+				            			choice4 = "";
+				            			review = "";
+				            			
+				            			try {
+					            		    songDAO.updateStatus(user_id, song, Status.COMPLETED);
+					            		    
+					            		    System.out.print("  - Input Personal Rating: ");
+						            		
+						            		try {
+						            	        rating = Double.parseDouble(scanner.nextLine());
+	
+						            	        if (rating < 1 || rating > 10) {
+						            	        	System.out.println("  - Rating must be between 1 and 10.\n  -");
+						            	        	choice4 = "WRONG";
+						            	        }
+						            	        else
+						            	        {
+						            	        	if(choice4 != "WRONG")
+						            	        	{
+							            	        	do
+							            	        	{
+							            	        		review = "";
+							            	        		
+								            	        	System.out.println("  - ");
+								            	        	System.out.println("  - {REVIEW SONG?}");
+								            	        	System.out.println("  - [1] Yes");
+								            	        	System.out.println("  - [2] No");
+								            	        	System.out.print("  - Enter your choice: ");
+								            	        	choice6 = scanner.nextLine();
+								            	        	
+								            	        	if(choice6.equals("1"))
+								            	        	{
+								            	        		System.out.println("  - ");
+								            	        		System.out.print("  - Enter Review: ");
+								            	        		review = scanner.nextLine();
+								            	        		
+								            	        		System.out.println("  - ");
+								            	        	}
+								            	        	else if(choice6.equals("2"))
+								            	        	{
+								            	        		System.out.println("  - ");
+								            	        	}
+								            	        	else
+								            	        	{
+								            	        		System.out.println("  - ");
+								            	        		System.out.println("  - Invalid input. Please try again.\n  -");
+								            	        		choice4 = "WRONG";
+								            	        	}
+								            	        	
+							            	        	} while(!choice6.equals("1") && !choice6.equals("2"));
+						            	        	}
+						            	        }
+						            	    }
+						            		catch (NumberFormatException e) {
+						            	        System.out.println("  - Please enter a valid number.\n  -");
+						            	    }
+						            		
+					            		    song.setUserRating(rating);
+					            		    song.setReview(review);
+					            		    
+					            		    songDAO.updateStatus(user_id, song, Status.COMPLETED);
+		
+					            		    System.out.println("  - Status updated!");
+					            		    choice5 = "<";
+		
+					            		}
+					            		catch (SQLException e) {
+					            		    System.out.println("  - Could not update status.\n");
+					            		}
+			            			} while(choice4.equals("WRONG"));
+			            		}
+			            		else if(song.getStatus() == Status.PLANNED)
+			            		{
+			            			do
+			            			{
+				            			choice4 = "";
+				            			review = "";
+				            			
+				            			try {
+					            		    songDAO.updateStatus(user_id, song, Status.COMPLETED);
+					            		    
+					            		    System.out.print("  - Input Personal Rating: ");
+						            		
+						            		try {
+						            	        rating = Double.parseDouble(scanner.nextLine());
+	
+						            	        if (rating < 1 || rating > 10) {
+						            	        	System.out.println("  - Rating must be between 1 and 10.\n  -");
+						            	        	choice4 = "WRONG";
+						            	        }
+						            	        else
+						            	        {
+						            	        	if(choice4 != "WRONG")
+						            	        	{
+							            	        	do
+							            	        	{
+							            	        		review = "";
+							            	        		
+								            	        	System.out.println("  - ");
+								            	        	System.out.println("  - {REVIEW SONG?}");
+								            	        	System.out.println("  - [1] Yes");
+								            	        	System.out.println("  - [2] No");
+								            	        	System.out.print("  - Enter your choice: ");
+								            	        	choice6 = scanner.nextLine();
+								            	        	
+								            	        	if(choice6.equals("1"))
+								            	        	{
+								            	        		System.out.println("  - ");
+								            	        		System.out.print("  - Enter Review: ");
+								            	        		review = scanner.nextLine();
+								            	        		
+								            	        		System.out.println("  - ");
+								            	        	}
+								            	        	else if(choice6.equals("2"))
+								            	        	{
+								            	        		System.out.println("  - ");
+								            	        	}
+								            	        	else
+								            	        	{
+								            	        		System.out.println("  - ");
+								            	        		System.out.println("  - Invalid input. Please try again.\n  -");
+								            	        		choice4 = "WRONG";
+								            	        	}
+								            	        	
+							            	        	} while(!choice6.equals("1") && !choice6.equals("2"));
+						            	        	}
+						            	        }
+						            	    }
+						            		catch (NumberFormatException e) {
+						            	        System.out.println("  - Please enter a valid number.\n  -");
+						            	        choice4 = "WRONG";
+						            	    }
+						            		
+					            		    song.setUserRating(rating);
+					            		    song.setReview(review);
+					            		    
+					            		    songDAO.updateStatus(user_id, song, Status.COMPLETED);
+					            		    
+					            		    if(!choice4.equals("WRONG"))
+					            		    	System.out.println("  - Status updated!");
+					            		    
+					            		    choice5 = "<";
+		
+					            		}
+					            		catch (SQLException e) {
+					            		    System.out.println("  - Could not update status.\n");
+					            		    System.out.println(e.getMessage());
+					            		}
+			            			} while(choice4.equals("WRONG"));
+			            		}
+			            	}
+			            	else if(choice5.equals("2"))
+			            	{
+			            		if(song.getStatus() == Status.COMPLETED)
+			            		{
+				            		try {
+				            		    songDAO.updateStatus(user_id, song, Status.PLANNED);
+	
+				            		    song.setStatus(Status.PLANNED);
+				            		    song.setUserRating(0.0);
+				            		    song.setReview("");
+	
+				            		    System.out.println("  - Status updated!");
+				            		    choice5 = "<";
+	
+				            		}
+				            		catch (SQLException e) {
+				            		    System.out.println("  - Could not update status.\n");
+				            		}
+			            		}
+			            		else if(song.getStatus() == Status.IN_PROGRESS)
+			            		{
+			            			try {
+				            		    songDAO.updateStatus(user_id, song, Status.PLANNED);
+	
+				            		    song.setStatus(Status.PLANNED);
+				            		    song.setUserRating(0.0);
+				            		    song.setReview("");
+	
+				            		    System.out.println("  - Status updated!");
+				            		    choice5 = "<";
+	
+				            		}
+				            		catch (SQLException e) {
+				            		    System.out.println("  - Could not update status.\n");
+				            		}
+			            		}
+			            		else if(song.getStatus() == Status.PLANNED)
+			            		{
+			            			try {
+				            		    songDAO.updateStatus(user_id, song, Status.IN_PROGRESS);
+	
+				            		    song.setStatus(Status.IN_PROGRESS);
+				            		    song.setUserRating(0.0);
+				            		    song.setReview("");
+	
+				            		    System.out.println("  - Status updated!");
+				            		    choice5 = "<";
+	
+				            		}
+				            		catch (SQLException e) {
+				            		    System.out.println("  - Could not update status.\n");
+				            		    System.out.println(e.getMessage());
+				            		}
+			            		}
+			            	}
+			            	else
+			            	{
+			            		System.out.println("  - Invalid input! Please try again.\n  -");
+			            	}
+		            	} while(!choice5.equals("<"));
+	    				
+	    				choice8 = "<";
+	    			}
+	    			else if(choice8.equals("2"))
+	    			{
+	    				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
+	    				
+	    				if(song.getStatus() == Status.COMPLETED)
+	    				{
+		    				do
+		    				{
+		    					choice5 = "";
+		    					
+			    				System.out.println("  - {CHANGE SONG RATING}");
+				            	System.out.print("  - Input New Rating: ");
+				            	try {
+				            		
+				            		try {
+				            			rating = Double.parseDouble(scanner.nextLine());
+				            		}
+				            		catch (NumberFormatException e) {
+				            			System.out.println("  - Please enter a valid number.\n  -");
+				            			choice5 = "WRONG";
+				            		}
+				            		
+			            	        if(!choice5.equals("WRONG"))
+			            	        {
+				            	        if (rating < 1 || rating > 10)
+				            	        {
+				            	        	System.out.println("  - Rating must be between 1 and 10.\n  -");
+				            	        	choice5 = "WRONG";
+				            	        }
+				            	        else
+				            	        {
+				            	        	songDAO.updateSongRating(user_id, song, rating);
+					            		    song.setUserRating(rating);
+					            		    
+					            		    System.out.println("  - Rating updated!");
+					            		    choice5 = "<";
+				            	        }
+			            	        }
+				            	}
+				            	catch (SQLException e) {
+				            		System.out.println("  - Could not update rating.\n  -");
+			            		    choice5 = "WRONG";
+				            	}
+				            	
+		    				} while(choice5.equals("WRONG"));
+		    				
+		    				choice8 = "<";
+	    				}
+	    				else
+	    				{
+	    					System.out.println("  * Invalid input! Please try again.");
+		    				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+	    				}
+	    			}
+	    			else if(choice8.equals("3"))
+	    			{
+	    				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
+	    				
+	    				if(song.getStatus() == Status.COMPLETED)
+	    				{
+		    				try {
+			    				if(song.getReview().equals(""))
+			    					System.out.println("  - {ADD SONG REVIEW}");
+				    			else
+				    				System.out.println("  - {CHANGE SONG REVIEW}");
+			    				
+				            	System.out.print("  - Input Review: ");
+				            	review = scanner.nextLine();
+				            	
+				            	songDAO.addReview(user_id, song, review);
+		            		    song.setReview(review);
+		            		    
+		            		    System.out.println("  - Review updated!");
+		    				}
+	            		    catch (SQLException e) {
+	            		    	if(song.getReview().equals(""))
+	            		    		System.out.println("  - Could not add review.\n  -");
+				    			else
+				    				System.out.println("  - Could not change review.\n  -");
+		            		    choice5 = "WRONG";
+			            	}
+		    				
+		    				choice8 = "<";
+	    				}
+	    				else
+	    				{
+	    					System.out.println("  * Invalid input! Please try again.");
+		    				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+	    				}
+	    			}
+	    			else if(choice8.equals("-"))
+	    			{
+	    				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
+	    				
+	    				try {
+	    					songDAO.deleteSong(user_id, song.getTitle(), song.getArtist());
+	    					song.setReview("");
+	    					song.setUserRating(0.0);
+	    				}
+	    				catch (SQLException e) {
+			    			System.out.println("  - Could not remove song.");
+		            	}
+	    				
+	    				choice8 = "<";
+	    			}
+	    			else if(choice8.equals("<"))
+	    			{
+	    				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+	    			}
+	    			else
+	    			{
+	    				System.out.println("  * Invalid input! Please try again.");
+	    				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
+	    			}
+	    			
+    			} while(!choice8.equals("<"));
+    		}
+    		else
+    		{
+    			System.out.println("= ");
+    			System.out.println("= Invalid input! Please try again.");
+    			System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - =");
+    		}
+    		
+    	} while(!choice7.equals("<"));
 	}
 }
