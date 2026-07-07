@@ -83,7 +83,7 @@ public class ShowDAOImpl implements ShowDAO {
 			System.out.println("Season added successfully.");
 		} catch (SQLException e) {
 			if (e.getMessage().contains("UNIQUE constraint failed")) {
-				System.out.println("Season '" + season.title + "' is already added.");
+				System.out.println("Season '" + season.getTitle() + "' is already added.");
 			} else {
 				System.out.println(e.getMessage());
 			}
@@ -137,7 +137,7 @@ public class ShowDAOImpl implements ShowDAO {
 			stmt.setInt(2, id);
 			ResultSet rs = stmt.executeQuery();
 			if (rs.next()) {
-				return new Show(title,
+				return new Show(rs.getString("title"),
 		    					Status.fromDbString(rs.getString("status")),
 		    					rs.getDouble("user_rating"),
 		    					rs.getInt("number_of_seasons"),
