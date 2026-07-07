@@ -22,6 +22,7 @@ public class SongDAOImpl implements SongDAO {
 		this.userId = userId;
 	}
 	
+	@Override
 	public int addSong(Song song, int userId) throws SQLException {
 
 	    int songId = -1;
@@ -145,6 +146,7 @@ public class SongDAOImpl implements SongDAO {
 	    return songId;
 	}
 	
+	@Override
 	public Song getSongById(int songId) throws SQLException {
 		String sql = """
 				SELECT s.id, s.title, s.status, s.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, s.review
@@ -180,6 +182,7 @@ public class SongDAOImpl implements SongDAO {
 		return null;
 	}
 	
+	@Override
 	public Song getSongByTitle(String title) throws SQLException {
 		String sql = """
 		        SELECT s.id, s.title, s.status, s.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, s.review
@@ -212,6 +215,7 @@ public class SongDAOImpl implements SongDAO {
 		return null;
 	}
 	
+	@Override
 	public List<Song> getSongsByUser(int userId) throws SQLException {
 	    List<Song> songs = new ArrayList<>();
 
@@ -263,6 +267,7 @@ public class SongDAOImpl implements SongDAO {
 	    return songs;
 	}
 	
+	@Override
 	public List<Song> getSongsByArtist(String artist, int userId) throws SQLException{
 		List<Song> songs = new ArrayList<>();
 
@@ -299,6 +304,7 @@ public class SongDAOImpl implements SongDAO {
 		return songs;
 	}
 	
+	@Override
 	public void deleteSong(int userId, String title, String artist) throws SQLException {
 
 	    String sql = """
@@ -312,6 +318,7 @@ public class SongDAOImpl implements SongDAO {
 	            WHERE user_id = ? AND title = 'all_songs'
 	        )
 	    """;
+
 	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 	        stmt.setString(1, title);
 	        stmt.setString(2, artist);
@@ -327,6 +334,7 @@ public class SongDAOImpl implements SongDAO {
 	    }
 	}
 	
+	@Override
 	public void updateSongRating(int userId, Song song, double rating) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items
@@ -350,6 +358,8 @@ public class SongDAOImpl implements SongDAO {
 	        stmt.executeUpdate();
 	    }
 	}
+	
+	@Override
 	public void addReview(int userId, Song song, String review) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items
@@ -374,6 +384,7 @@ public class SongDAOImpl implements SongDAO {
 	    }
 	}
 	
+	@Override
 	public void updateStatus(int userId, Song song, Status newStatus) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items

@@ -55,7 +55,7 @@ public class Song {
     public String getAlbum() {
     	return album;
     }
-
+    
     public String getArtist() {
         return artist;
     }
@@ -63,11 +63,11 @@ public class Song {
     public int getYearReleased() {
     	return yearReleased;
     }
-
+    
     public int getRuntimeSeconds() {
         return runtimeSeconds;
     }
-    
+
     public String getRuntimeString() {
         int minutes = runtimeSeconds/60;
         int seconds = runtimeSeconds%60;

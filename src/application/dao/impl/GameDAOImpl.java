@@ -204,33 +204,150 @@ public class GameDAOImpl implements GameDAO{
 	}
 
 	@Override
-	public void updateGameRating(String title, double rating) throws SQLException {
-		String sql = """
-				UPDATE games 
-				SET user_rating = ? 
-				WHERE title = ?
-				""";
-		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setDouble(1, rating);
-			stmt.setString(2, title);
-			stmt.executeUpdate();
-			System.out.println("Game updated: " + title);
+	public void updateStatus(String title, Status status) throws SQLException {
+		// get game id
+		int gameId = getGameId(title);
+
+		if (gameId == -1) {
+			System.out.println("Game not found: " + title);
+		}
+		else {
+			// check if review exists
+			String checkSql = "SELECT user_id FROM games_reviews WHERE user_id = ? AND game_id = ?";
+			boolean reviewExists = false;
+
+			try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+				stmt.setInt(1, userId);
+				stmt.setInt(2, gameId);
+
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						reviewExists = true;
+					}
+				}
+			}
+
+			if (reviewExists) {
+				String updateSql = "UPDATE games_reviews SET status = ? WHERE user_id = ? AND game_id = ?";
+				try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+					stmt.setString(1, status.toDbString());
+					stmt.setInt(2, userId);
+					stmt.setInt(3, gameId);
+					stmt.executeUpdate();
+				}
+
+				// if changing TO completed, rating/review can now be added
+				// if changing AWAY from completed, clear rating and review
+				if (status != Status.COMPLETED) {
+					String clearSql = "UPDATE games_reviews SET user_rating = NULL, review = NULL WHERE user_id = ? AND game_id = ?";
+					try (PreparedStatement stmt = conn.prepareStatement(clearSql)) {
+						stmt.setInt(1, userId);
+						stmt.setInt(2, gameId);
+						stmt.executeUpdate();
+					}
+				}
+
+			} else {
+				String insertSql = "INSERT INTO games_reviews (user_id, game_id, status) VALUES (?, ?, ?)";
+				try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+					stmt.setInt(1, userId);
+					stmt.setInt(2, gameId);
+					stmt.setString(3, status.toDbString());
+					stmt.executeUpdate();
+				}
+			}
+
+			System.out.println("Status updated for '" + title + "' to: " + status.toDbString());
 		}
 	}
 
 	@Override
+	public void updateGameRating(String title, double rating) throws SQLException {
+		int gameId = getGameId(title);
+
+		if (gameId == -1) {
+			System.out.println("Game not found: " + title);
+		} else {
+			String checkSql = "SELECT user_id FROM games_reviews WHERE user_id = ? AND game_id = ?";
+			boolean reviewExists = false;
+
+			try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+				stmt.setInt(1, userId);
+				stmt.setInt(2, gameId);
+
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						reviewExists = true;
+					}
+				}
+			}
+
+			if (reviewExists) {
+				// update existing review
+				String updateSql = "UPDATE games_reviews SET user_rating = ? WHERE user_id = ? AND game_id = ?";
+				try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+					stmt.setDouble(1, rating);
+					stmt.setInt(2, userId);
+					stmt.setInt(3, gameId);
+					stmt.executeUpdate();
+				}
+			} else {
+				// insert new review
+				String insertSql = "INSERT INTO games_reviews (user_id, game_id, user_rating) VALUES (?, ?, ?)";
+				try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
+					pstmt.setInt(1, userId);
+					pstmt.setInt(2, gameId);
+					pstmt.setDouble(3, rating);
+					pstmt.executeUpdate();
+				}
+			}
+
+			System.out.println("Rating updated for: " + title);
+		}       
+	}
+
+	@Override
 	public void updateReview(String title, String review) throws SQLException {
-		String sql = """
-				UPDATE games 
-				SET review = ?
-				WHERE title = ?
-				""";
-		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setString(1, review);
-			stmt.setString(2, title);
-			stmt.executeUpdate();
-			System.out.println("Game updated: " + title);
+		// first get the game id
+		int gameId = getGameId(title);
+
+		if (gameId == -1) {
+			System.out.println("Game not found: " + title);
 		}
+		else {
+			String checkSql = "SELECT user_id FROM games_reviews WHERE user_id = ? AND game_id = ?";
+			boolean reviewExists = false;
+
+			try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+				stmt.setInt(1, userId);
+				stmt.setInt(2, gameId);
+
+				ResultSet rs = stmt.executeQuery();
+				if (rs.next()) {
+					reviewExists = true;
+				}
+			}
+
+			if (reviewExists) {
+				String updateSql = "UPDATE games_reviews SET review = ? WHERE user_id = ? AND game_id = ?";
+				try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+					stmt.setString(1, review);
+					stmt.setInt(2, userId);
+					stmt.setInt(3, gameId);
+					stmt.executeUpdate();
+				}
+			} else {
+				String insertSql = "INSERT INTO games_reviews (user_id, game_id, review) VALUES (?, ?, ?)";
+				try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+					stmt.setInt(1, userId);
+					stmt.setInt(2, gameId);
+					stmt.setString(3, review);
+					stmt.executeUpdate();
+				}
+			}
+
+			System.out.println("Review updated for: " + title);
+		}	
 	}
 
 	@Override

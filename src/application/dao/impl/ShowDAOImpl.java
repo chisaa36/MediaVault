@@ -391,83 +391,225 @@ public class ShowDAOImpl implements ShowDAO {
 
 	@Override
 	public void updateShowStatus(String title, String status) throws SQLException {
-		String sql = """
-				UPDATE shows 
-				SET status = ? 
-				WHERE title = ?
-				""";
-		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setString(1, status);
-			stmt.setString(2, title);
-			stmt.executeUpdate();
-			System.out.println("Show updated: " + title);
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
+		int showId = getShowId(title);
+		
+		if (showId == -1) {
+			System.out.println("Show not found: " + title);
+		} else {
+			String checkSql = "SELECT user_id FROM shows_reviews WHERE user_id = ? AND show_id = ?";
+			boolean reviewExists = false;
+			
+			try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+				stmt.setInt(1, userId);
+				stmt.setInt(2, showId);
+				
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						reviewExists = true;
+					}
+				}
+			}
+			
+			if (reviewExists) {
+				String updateSql = "UPDATE shows_reviews SET status = ? WHERE user_id = ? AND show_id = ?";
+				try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+					stmt.setString(1, status);
+					stmt.setInt(2, userId);
+					stmt.setInt(3, showId);
+					stmt.executeUpdate();
+				}
+				
+				if (!status.equalsIgnoreCase(Status.COMPLETED.toDbString())) {
+					String clearSql = "UPDATE shows_reviews SET user_rating = NULL, review = NULL WHERE user_id = ? AND show_id = ?";
+					try (PreparedStatement stmt = conn.prepareStatement(clearSql)) {
+						stmt.setInt(1, userId);
+						stmt.setInt(2, showId);
+						stmt.executeUpdate();
+					}
+				}
+			} else {
+				String insertSql = "INSERT INTO shows_reviews (user_id, show_id, status) VALUES (?, ?, ?)";
+				try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+					stmt.setInt(1, userId);
+					stmt.setInt(2, showId);
+					stmt.setString(3, status);
+					stmt.executeUpdate();
+				}
+			}
+			
+			System.out.println("Status updated for '" + title + "' to: " + status);
 		}
 	}
 
 	@Override
 	public void updateShowRating(String title, double rating) throws SQLException {
-		String sql = """
-				UPDATE shows 
-				SET user_rating = ? 
-				WHERE title = ?
-				""";
+		int showId = getShowId(title);
 		
-		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setDouble(1, rating);
-			stmt.setString(2, title);
-			stmt.executeUpdate();
-			System.out.println("Show updated: " + title);
+		if (showId == -1) {
+			System.out.println("Show not found: " + title);
+		} else {
+			String checkSql = "SELECT user_id FROM shows_reviews WHERE user_id = ? AND show_id = ?";
+			boolean reviewExists = false;
+			
+			try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+				stmt.setInt(1, userId);
+				stmt.setInt(2, showId);
+				
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						reviewExists = true;
+					}
+				}
+			}
+			
+			if (reviewExists) {
+				String updateSql = "UPDATE shows_reviews SET user_rating = ? WHERE user_id = ? AND show_id = ?";
+				try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+					stmt.setDouble(1, rating);
+					stmt.setInt(2, userId);
+					stmt.setInt(3, showId);
+					stmt.executeUpdate();
+				}
+			} else {
+				String insertSql = "INSERT INTO shows_reviews (user_id, show_id, user_rating) VALUES (?, ?, ?)";
+				try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+					stmt.setInt(1, userId);
+					stmt.setInt(2, showId);
+					stmt.setDouble(3, rating);
+					stmt.executeUpdate();
+				}
+			}
+			
+			System.out.println("Rating updated for: " + title);
 		}
 	}
 
 	@Override
 	public void updateEpisodeStatus(String title, String status) throws SQLException {
-		String sql = """
-				UPDATE episodes 
-				SET status = ? 
-				WHERE title = ?
-				""";
-		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setString(1, status);
-			stmt.setString(2, title);
-			stmt.executeUpdate();
-			System.out.println("Episode updated: " + title);
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
+		int episodeId = getEpisodeId(title);
+		
+		if (episodeId == -1) {
+			System.out.println("Episode not found: " + title);
+		} else {
+			String checkSql = "SELECT user_id FROM episodes_reviews WHERE user_id = ? AND episode_id = ?";
+			boolean reviewExists = false;
+			
+			try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+				stmt.setInt(1, userId);
+				stmt.setInt(2, episodeId);
+				
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						reviewExists = true;
+					}
+				}
+			}
+			
+			if (reviewExists) {
+				String updateSql = "UPDATE episodes_reviews SET status = ? WHERE user_id = ? AND episode_id = ?";
+				try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+					stmt.setString(1, status);
+					stmt.setInt(2, userId);
+					stmt.setInt(3, episodeId);
+					stmt.executeUpdate();
+				}
+			} else {
+				String insertSql = "INSERT INTO episodes_reviews (user_id, episode_id, status) VALUES (?, ?, ?)";
+				try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+					stmt.setInt(1, userId);
+					stmt.setInt(2, episodeId);
+					stmt.setString(3, status);
+					stmt.executeUpdate();
+				}
+			}
+			
+			System.out.println("Episode status updated for: " + title);
 		}
 	}
 
 	@Override
 	public void updateEpisodeRating(String title, double rating) throws SQLException {
-		String sql = """
-				UPDATE episodes 
-				SET user_rating = ? 
-				WHERE title = ?
-				""";
-		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setDouble(1, rating);
-			stmt.setString(2, title);
-			stmt.executeUpdate();
-			System.out.println("Episode updated: " + title);
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
+		int episodeId = getEpisodeId(title);
+		
+		if (episodeId == -1) {
+			System.out.println("Episode not found: " + title);
+		} else {
+			String checkSql = "SELECT user_id FROM episodes_reviews WHERE user_id = ? AND episode_id = ?";
+			boolean reviewExists = false;
+			
+			try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+				stmt.setInt(1, userId);
+				stmt.setInt(2, episodeId);
+				
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						reviewExists = true;
+					}
+				}
+			}
+			
+			if (reviewExists) {
+				String updateSql = "UPDATE episodes_reviews SET user_rating = ? WHERE user_id = ? AND episode_id = ?";
+				try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+					stmt.setDouble(1, rating);
+					stmt.setInt(2, userId);
+					stmt.setInt(3, episodeId);
+					stmt.executeUpdate();
+				}
+			} else {
+				String insertSql = "INSERT INTO episodes_reviews (user_id, episode_id, user_rating) VALUES (?, ?, ?)";
+				try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+					stmt.setInt(1, userId);
+					stmt.setInt(2, episodeId);
+					stmt.setDouble(3, rating);
+					stmt.executeUpdate();
+				}
+			}
+			
+			System.out.println("Episode rating updated for: " + title);
 		}
 	}
 
 	@Override
 	public void updateReview(String title, String review) throws SQLException {
-		String sql = """
-				UPDATE shows 
-				SET review = ?
-				WHERE title = ?
-				""";
-		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setString(1, review);
-			stmt.setString(2, title);
-			stmt.executeUpdate();
-			System.out.println("Show updated: " + title);
+		int showId = getShowId(title);
+		
+		if (showId == -1) {
+			System.out.println("Show not found: " + title);
+		} else {
+			String checkSql = "SELECT user_id FROM shows_reviews WHERE user_id = ? AND show_id = ?";
+			boolean reviewExists = false;
+			
+			try (PreparedStatement stmt = conn.prepareStatement(checkSql)) {
+				stmt.setInt(1, userId);
+				stmt.setInt(2, showId);
+				
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						reviewExists = true;
+					}
+				}
+			}
+			
+			if (reviewExists) {
+				String updateSql = "UPDATE shows_reviews SET review = ? WHERE user_id = ? AND show_id = ?";
+				try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+					stmt.setString(1, review);
+					stmt.setInt(2, userId);
+					stmt.setInt(3, showId);
+					stmt.executeUpdate();
+				}
+			} else {
+				String insertSql = "INSERT INTO shows_reviews (user_id, show_id, review) VALUES (?, ?, ?)";
+				try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+					stmt.setInt(1, userId);
+					stmt.setInt(2, showId);
+					stmt.setString(3, review);
+					stmt.executeUpdate();
+				}
+			}
+			
+			System.out.println("Review updated for: " + title);
 		}
 	}
 
@@ -544,5 +686,42 @@ public class ShowDAOImpl implements ShowDAO {
 			System.out.println(e.getMessage());
 		}
 		return shows;
+	}
+
+	private int getShowId(String title) throws SQLException {
+		String sql = """
+				SELECT s.id
+				FROM shows_playlists sp
+				JOIN shows_playlist_items spi ON sp.id = spi.playlist_id
+				JOIN shows s ON spi.show_id = s.id
+				WHERE sp.user_id = ? AND sp.id = 1 AND s.title = ?
+				""";
+		
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.setInt(1, userId);
+			stmt.setString(2, title);
+			
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt("id");
+			}
+		}
+		
+		return -1;
+	}
+
+	private int getEpisodeId(String title) throws SQLException {
+		String sql = "SELECT id FROM episodes WHERE title = ?";
+		
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.setString(1, title);
+			
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt("id");
+			}
+		}
+		
+		return -1;
 	}
 }

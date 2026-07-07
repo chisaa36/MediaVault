@@ -17,12 +17,10 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 
 	private Connection conn;
 	private int userId;
-	private SongDAOImpl songDAOImpl; // Assuming a similar structure to gamesDAOImpl for IDs
 	
 	public SongPlaylistDAOImpl(Connection conn, int userId) {
 		this.conn = conn;
 		this.userId = userId;
-		this.songDAOImpl = new SongDAOImpl(conn, userId);
 	}
 	
 	@Override
@@ -70,7 +68,7 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 	@Override
 	public void addSongsToPlaylist(int playlistId, List<Song> songs) throws SQLException {
 		for (Song song : songs) {
-			int songId = songDAOImpl.getSongId(song.getTitle());
+			int songId = getSongId(song.getTitle());
 			
 			if (songId != -1) {
 				String sql = "INSERT OR IGNORE INTO songs_playlist_items (playlist_id, song_id) VALUES (?, ?)";
@@ -129,7 +127,8 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 									 rs.getString("album"),
 									 rs.getString("artist"),
 									 rs.getInt("year_released"),
-									 rs.getInt("runtime_seconds"));
+									 rs.getInt("runtime_seconds"),
+									 rs.getString("review"));
 				
 				items.add(song);
 			}
@@ -178,6 +177,30 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 		}
+	}
+	
+	private int getSongId(String title) throws SQLException {
+		String sql = """
+				SELECT s.id
+				FROM songs_playlists sp
+				JOIN songs_playlist_items spi
+				ON sp.id = spi.playlist_id
+				JOIN songs s
+				ON spi.song_id = s.id
+				WHERE sp.user_id = ? AND sp.id = 1 AND s.title = ?
+				""";
+			
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.setInt(1, userId);
+			stmt.setString(2, title);
+				
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) {
+				return rs.getInt("id");
+			}
+		}
+		
+		return -1;
 	}
 
 }
