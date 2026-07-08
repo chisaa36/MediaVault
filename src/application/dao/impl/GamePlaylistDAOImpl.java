@@ -35,10 +35,12 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 			stmt.setInt(1, userId);
 			stmt.setString(2, name);
 			stmt.executeUpdate();
-			ResultSet keys = stmt.getGeneratedKeys();
-	        if (keys.next()) {
-	        	playlistId = keys.getInt(1);
-	        }
+			
+			try (ResultSet keys = stmt.getGeneratedKeys()) {
+		        if (keys.next()) {
+		        	playlistId = keys.getInt(1);
+		        }
+			}
 	        System.out.println("Game added successfully.");
 		} catch (SQLException e) {
 			if (e.getMessage().contains("UNIQUE constraint failed")) {
@@ -124,30 +126,29 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 		List<Game> items = new ArrayList<Game>();
 		
 		String sql = """
-
-			SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
-			FROM games_playlists gp
-			JOIN games_playlist_items gpi
-			ON gp.id = gpi.playlist_id
-			JOIN games g
-			ON gpi.game_id = g.id
-			WHERE gp.user_id = ? AND gp.id = ?
-			""";
+				SELECT g.id, g.title, r.status, r.user_rating, r.review, g.developer, g.avg_playtime_mins
+				FROM games_playlists gp
+				JOIN games_playlist_items gpi ON gp.id = gpi.playlist_id
+				JOIN games g ON gpi.game_id = g.id
+				LEFT JOIN games_reviews r ON g.id = r.game_id AND r.user_id = gp.user_id
+				WHERE gp.user_id = ? AND gp.id = ?
+				""";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, userId);
 			stmt.setInt(2, playlistId);
 			
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				Game game = new Game(rs.getString("title"),
-									 Status.fromDbString(rs.getString("status")),
-									 rs.getDouble("user_rating"),
-									 rs.getString("review"),
-									 rs.getString("developer"),
-									 rs.getInt("avg_playtime_mins"));
-				
-				items.add(game);
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					Game game = new Game(rs.getString("title"),
+										 Status.fromDbString(rs.getString("status")),
+										 rs.getDouble("user_rating"),
+										 rs.getString("review"),
+										 rs.getString("developer"),
+										 rs.getInt("avg_playtime_mins"));
+					
+					items.add(game);
+				}
 			}
 		}
 		
@@ -163,13 +164,14 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, userId);
 			
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				List<Game> items = getGamesInPlaylist(rs.getInt("id"));
-				
-				GamePlaylist playlist = new GamePlaylist(rs.getString("title"), items);
-				
-				playlists.add(playlist);
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					List<Game> items = getGamesInPlaylist(rs.getInt("id"));
+					
+					GamePlaylist playlist = new GamePlaylist(rs.getString("title"), items);
+					
+					playlists.add(playlist);
+				}
 			}
 		}
 		
