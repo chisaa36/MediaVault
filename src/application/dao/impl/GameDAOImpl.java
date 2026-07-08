@@ -66,12 +66,11 @@ public class GameDAOImpl implements GameDAO{
 	@Override
 	public Game getGameById(int gameId) throws SQLException {
 		String sql = """
-				SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
+				SELECT g.id, g.title, r.status, r.user_rating, r.review, g.developer, g.avg_playtime_mins
 				FROM games_playlists gp
-				INNER JOIN games_playlist_items gpi
-				ON gp.id = gpi.playlist_id
-				INNER JOIN games g
-				ON gpi.game_id = g.id
+				INNER JOIN games_playlist_items gpi ON gp.id = gpi.playlist_id
+				INNER JOIN games g ON gpi.game_id = g.id
+				LEFT JOIN games_reviews r ON g.id = r.game_id AND r.user_id = gp.user_id
 				WHERE gp.user_id = ? AND g.id = ?
 				""";
 		
@@ -100,10 +99,11 @@ public class GameDAOImpl implements GameDAO{
 	@Override
 	public Game getGameByTitle(String title) throws SQLException {		
 		String sql = """
-		        SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
+		        SELECT g.id, g.title, r.status, r.user_rating, r.review, g.developer, g.avg_playtime_mins
 		        FROM games_playlists gp
 		        JOIN games_playlist_items gpi ON gp.id = gpi.playlist_id
 		        JOIN games g ON gpi.game_id = g.id
+		        LEFT JOIN games_reviews r ON g.id = r.game_id AND r.user_id = gp.user_id
 		        WHERE g.title = ? AND gp.user_id = ?
 		    """;
 
@@ -133,13 +133,12 @@ public class GameDAOImpl implements GameDAO{
 		List<Game> games = new ArrayList<>();
 
 		String sql = """
-				SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
-				FROM games_playlists gp
-				INNER JOIN games_playlist_items gpi
-				ON gp.id = gpi.playlist_id
-				INNER JOIN games g
-				ON gpi.game_id = g.id
-				WHERE gp.user_id = ?
+				SELECT g.id, g.title, r.status, r.user_rating, r.review, g.developer, g.avg_playtime_mins
+		        FROM games_playlists gp
+		        INNER JOIN games_playlist_items gpi ON gp.id = gpi.playlist_id
+		        INNER JOIN games g ON gpi.game_id = g.id
+		        LEFT JOIN games_reviews r ON g.id = r.game_id AND r.user_id = gp.user_id
+		        WHERE gp.user_id = ?
 				""";
 
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
@@ -164,7 +163,7 @@ public class GameDAOImpl implements GameDAO{
 	
 	@Override
 	public int addGenre(String string) throws SQLException {
-		int genreId = -1;
+		int lastGenreId = -1;
 		String[] genreList = string.split(" ");
 		
 		for (String genre : genreList) {
@@ -174,24 +173,27 @@ public class GameDAOImpl implements GameDAO{
 		        stmt.setString(1, genre);
 		        stmt.executeUpdate();
 
-		        ResultSet keys = stmt.getGeneratedKeys();
-		        if (keys.next()) {
-		            genreId = keys.getInt(1);
-		        } else {
-		            sql = "SELECT id FROM genres WHERE genre = ?";
-		            try (PreparedStatement selStmt = conn.prepareStatement(sql)) {
-		                selStmt.setString(1, genre);
-						
-		                ResultSet rs = selStmt.executeQuery();
-		                if (rs.next()) {
-		                    genreId = rs.getInt("id");
-		                }
-		            }
+		        try (ResultSet keys = stmt.getGeneratedKeys()) {
+			        if (keys.next()) {
+			            lastGenreId = keys.getInt(1);
+			        } else {
+			            sql = "SELECT id FROM genres WHERE genre = ?";
+			            
+			            try (PreparedStatement selStmt = conn.prepareStatement(sql)) {
+			                selStmt.setString(1, genre);
+			                
+			                try (ResultSet rs = selStmt.executeQuery()) {
+				                if (rs.next()) {
+				                    lastGenreId = rs.getInt("id");
+				                }
+			                }
+			            }
+			        }
 		        }
 		    }
 		}
 		
-		return genreId;
+		return lastGenreId;
 	}
 	
 	@Override
@@ -309,7 +311,7 @@ public class GameDAOImpl implements GameDAO{
 
 	@Override
 	public void updateReview(String title, String review) throws SQLException {
-		// first get the game id
+		// get the game id
 		int gameId = getGameId(title);
 
 		if (gameId == -1) {
@@ -323,9 +325,10 @@ public class GameDAOImpl implements GameDAO{
 				stmt.setInt(1, userId);
 				stmt.setInt(2, gameId);
 
-				ResultSet rs = stmt.executeQuery();
-				if (rs.next()) {
-					reviewExists = true;
+				try (ResultSet rs = stmt.executeQuery()) {
+				    if (rs.next()) {
+				        reviewExists = true;
+				    }
 				}
 			}
 

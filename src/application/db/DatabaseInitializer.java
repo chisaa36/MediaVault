@@ -16,7 +16,7 @@ public class DatabaseInitializer {
 			// create users table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS users (
-				user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				username TEXT UNIQUE,
 				password TEXT NOT NULL
 			)""");
@@ -123,7 +123,7 @@ public class DatabaseInitializer {
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS songs_playlist_items (
 				playlist_id INTEGER NOT NULL,
-			    songs_id INTEGER NOT NULL,
+			    song_id INTEGER NOT NULL,
 			    status TEXT,
 			    user_rating REAL,
 			    review TEXT,
@@ -183,7 +183,6 @@ public class DatabaseInitializer {
 				FOREIGN KEY (show_id) REFERENCES shows(id),
 				FOREIGN KEY (genre_id) REFERENCES genres(id)
 			)""");
-			System.out.println("Tables initialized.");
 
 			// create games_reviews table
 			stmt.execute("""
@@ -208,6 +207,7 @@ public class DatabaseInitializer {
 				status TEXT,
 				user_rating REAL,
 				review TEXT,
+				
 				UNIQUE (user_id, song_id),
 				FOREIGN KEY (user_id) REFERENCES users(id),
 				FOREIGN KEY (song_id) REFERENCES songs(id)
@@ -252,6 +252,8 @@ public class DatabaseInitializer {
 				FOREIGN KEY (user_id) REFERENCES users(id),
 				FOREIGN KEY (episode_id) REFERENCES episode(id)
 			)""");
+			
+			System.out.println("Tables initialized.");
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 		}
