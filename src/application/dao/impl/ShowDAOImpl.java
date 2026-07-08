@@ -123,32 +123,34 @@ public class ShowDAOImpl implements ShowDAO {
 	@Override
 	public Show getShowById(int id) throws SQLException {
 		String sql = """
-				SELECT s.id, s.title, s.status, s.user_rating, s.creator, s.avg_runtime_mins
+				SELECT s.id, s.title, sr.status, sr.user_rating, sr.review, s.num_of_seasons, s.num_of_episodes, s.avg_mins_per_ep, s.first_year_aired, s.last_year_aired
 				FROM shows_playlists sp
-				INNER JOIN shows_playlist_items spi
-				ON sp.id = spi.playlist_id
-				INNER JOIN shows s
-				ON spi.show_id = s.id
+				INNER JOIN shows_playlist_items spi ON sp.id = spi.playlist_id
+				INNER JOIN shows s ON spi.show_id = s.id
+				LEFT JOIN shows_reviews sr ON s.id = sr.show_id AND sr.user_id = sp.user_id
 				WHERE sp.user_id = ? AND s.id = ?
 				""";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, userId);
 			stmt.setInt(2, id);
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				return new Show(rs.getString("title"),
-			   					Status.fromDbString(rs.getString("status")),
-			   					rs.getDouble("user_rating"),
-			   					rs.getString("review"),
-			   					rs.getInt("num_of_seasons"),
-			   					rs.getInt("num_of_episodes"),
-			   					rs.getInt("avg_mins_per_ep"),
-			   					rs.getInt("first_year_aired"),
-			   					rs.getInt("last_year_aired"));
-			}
-			else {
-				System.out.println("Show not found");
+			
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return new Show(rs.getString("title"),
+				   					Status.fromDbString(rs.getString("status")),
+				   					rs.getDouble("user_rating"),
+				   					rs.getString("review"),
+				   					rs.getInt("num_of_seasons"),
+				   					rs.getInt("num_of_episodes"),
+				   					rs.getInt("avg_mins_per_ep"),
+				   					rs.getInt("first_year_aired"),
+				   					rs.getInt("last_year_aired"));
+				} 
+			
+				else {
+					System.out.println("Show not found");
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -160,29 +162,32 @@ public class ShowDAOImpl implements ShowDAO {
 	@Override
 	public Show getShowByTitle(String title) throws SQLException {		
 		String sql = """
-		        SELECT s.id, s.title, s.status, s.user_rating, s.creator, s.avg_runtime_mins
+		        SELECT s.id, s.title, sr.status, sr.user_rating, sr.review, s.num_of_seasons, s.num_of_episodes, s.avg_mins_per_ep, s.first_year_aired, s.last_year_aired
 		        FROM shows_playlists sp
 		        JOIN shows_playlist_items spi ON sp.id = spi.playlist_id
 		        JOIN shows s ON spi.show_id = s.id
+		        LEFT JOIN shows_reviews sr ON s.id = sr.show_id AND sr.user_id = sp.user_id
 		        WHERE s.title = ? AND sp.user_id = ?
 		    """;
 
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.setString(1, title);
 		    stmt.setInt(2, userId);
-		    ResultSet rs = stmt.executeQuery();
-		    if (rs.next()) {
-		    	return new Show(rs.getString("title"),
-   					 			Status.fromDbString(rs.getString("status")),
-			   					rs.getDouble("user_rating"),
-			   					rs.getString("review"),
-			   					rs.getInt("num_of_seasons"),
-			   					rs.getInt("num_of_episodes"),
-			   					rs.getInt("avg_mins_per_ep"),
-			   					rs.getInt("first_year_aired"),
-			   					rs.getInt("last_year_aired"));
-		    } else {
-		    	System.out.println("Show not found.");
+		    
+		    try (ResultSet rs = stmt.executeQuery()) {
+			    if (rs.next()) {
+			    	return new Show(rs.getString("title"),
+	   					 			Status.fromDbString(rs.getString("status")),
+				   					rs.getDouble("user_rating"),
+				   					rs.getString("review"),
+				   					rs.getInt("num_of_seasons"),
+				   					rs.getInt("num_of_episodes"),
+				   					rs.getInt("avg_mins_per_ep"),
+				   					rs.getInt("first_year_aired"),
+				   					rs.getInt("last_year_aired"));
+			    } else {
+			    	System.out.println("Show not found.");
+			    }
 		    }
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -196,30 +201,31 @@ public class ShowDAOImpl implements ShowDAO {
 		List<Show> shows = new ArrayList<>();
 
 		String sql = """
-				SELECT s.id, s.title, s.status, s.user_rating, s.creator, s.avg_runtime_mins
+				SELECT s.id, s.title, sr.status, sr.user_rating, sr.review, s.num_of_seasons, s.num_of_episodes, s.avg_mins_per_ep, s.first_year_aired, s.last_year_aired
 				FROM shows_playlists sp
-				INNER JOIN shows_playlist_items spi
-				ON sp.id = spi.playlist_id
-				INNER JOIN shows s
-				ON spi.show_id = s.id
+				INNER JOIN shows_playlist_items spi ON sp.id = spi.playlist_id
+				INNER JOIN shows s ON spi.show_id = s.id
+				LEFT JOIN shows_reviews sr ON s.id = sr.show_id AND sr.user_id = sp.user_id
 				WHERE sp.user_id = ?
 				""";
 
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, userId);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				Show show = new Show(rs.getString("title"),
-			   					Status.fromDbString(rs.getString("status")),
-			   					rs.getDouble("user_rating"),
-			   					rs.getString("review"),
-			   					rs.getInt("num_of_seasons"),
-			   					rs.getInt("num_of_episodes"),
-			   					rs.getInt("avg_mins_per_ep"),
-			   					rs.getInt("first_year_aired"),
-			   					rs.getInt("last_year_aired"));
-				
-				shows.add(show);
+			
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					Show show = new Show(rs.getString("title"),
+				   					Status.fromDbString(rs.getString("status")),
+				   					rs.getDouble("user_rating"),
+				   					rs.getString("review"),
+				   					rs.getInt("num_of_seasons"),
+				   					rs.getInt("num_of_episodes"),
+				   					rs.getInt("avg_mins_per_ep"),
+				   					rs.getInt("first_year_aired"),
+				   					rs.getInt("last_year_aired"));
+					
+					shows.add(show);
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -244,15 +250,17 @@ public class ShowDAOImpl implements ShowDAO {
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.setInt(1, userId);
 			stmt.setInt(2, showId);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				List<Episode> episodes = getEpisodesBySeason(showId, rs.getInt("id"));
-				
-				Season season = new Season(rs.getString("title"),
-										   Status.fromDbString(rs.getString("status")),
-										   episodes);
-				
-				seasons.add(season);
+			
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					List<Episode> episodes = getEpisodesBySeason(showId, rs.getInt("id"));
+					
+					Season season = new Season(rs.getString("title"),
+											   Status.fromDbString(rs.getString("status")),
+											   episodes);
+					
+					seasons.add(season);
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -277,14 +285,15 @@ public class ShowDAOImpl implements ShowDAO {
 			stmt.setInt(1, userId);
 			stmt.setString(2, title);
 			
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				List<Episode> episodes = getEpisodesBySeason(rs.getInt("show_id"), rs.getInt("id"));
-				
-				Season season = new Season(rs.getString("title"),
-										   Status.fromDbString(rs.getString("status")),
-										   episodes);
-				seasons.add(season);
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					List<Episode> episodes = getEpisodesBySeason(rs.getInt("show_id"), rs.getInt("id"));
+					
+					Season season = new Season(rs.getString("title"),
+											   Status.fromDbString(rs.getString("status")),
+											   episodes);
+					seasons.add(season);
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -310,14 +319,16 @@ public class ShowDAOImpl implements ShowDAO {
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.setInt(1, userId);
 			stmt.setInt(2, id);
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				return new Episode(rs.getString("title"),
-								   Status.fromDbString(rs.getString("status")),
-								   rs.getDouble("user_rating"),
-								   rs.getString("review"));
-			} else {
-				System.out.println("Episode not found");
+			
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return new Episode(rs.getString("title"),
+									   Status.fromDbString(rs.getString("status")),
+									   rs.getDouble("user_rating"),
+									   rs.getString("review"));
+				} else {
+					System.out.println("Episode not found");
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -342,14 +353,16 @@ public class ShowDAOImpl implements ShowDAO {
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.setInt(1, userId);
 			stmt.setString(2, title);
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				return new Episode(rs.getString("title"),
-								   Status.fromDbString(rs.getString("status")),
-								   rs.getDouble("user_rating"),
-								   rs.getString("review"));
-			} else {
-				System.out.println("Episode not found.");
+			
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return new Episode(rs.getString("title"),
+									   Status.fromDbString(rs.getString("status")),
+									   rs.getDouble("user_rating"),
+									   rs.getString("review"));
+				} else {
+					System.out.println("Episode not found.");
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -378,14 +391,15 @@ public class ShowDAOImpl implements ShowDAO {
 			stmt.setInt(2, showId);
 			stmt.setInt(3, seasonId);
 			
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				Episode episode = new Episode(rs.getString("title"),
-											 Status.fromDbString(rs.getString("status")),
-											 rs.getDouble("user_rating"),
-											 rs.getString("review"));
-				
-				items.add(episode);
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					Episode episode = new Episode(rs.getString("title"),
+												 Status.fromDbString(rs.getString("status")),
+												 rs.getDouble("user_rating"),
+												 rs.getString("review"));
+					
+					items.add(episode);
+				}
 			}
 		}
 		
@@ -630,28 +644,33 @@ public class ShowDAOImpl implements ShowDAO {
 	public List<Show> getShowsByStatus(Status status) throws SQLException {
 		List<Show> shows = new ArrayList<>();
 		String sql = """
-				SELECT s.id, s.title, s.status, s.user_rating, s.creator, s.avg_runtime_mins
+				SELECT s.id, s.title, sr.status, sr.user_rating, sr.review, 
+				       s.num_of_seasons, s.num_of_episodes, s.avg_mins_per_ep, 
+				       s.first_year_aired, s.last_year_aired
 				FROM shows_playlists sp
 				INNER JOIN shows_playlist_items spi ON sp.id = spi.playlist_id
 				INNER JOIN shows s ON spi.show_id = s.id
-				WHERE sp.user_id = ? AND s.status = ?
+				LEFT JOIN shows_reviews sr ON s.id = sr.show_id AND sr.user_id = sp.user_id
+				WHERE sp.user_id = ? AND sr.status = ?
 				""";
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.setInt(1, userId);
 			stmt.setString(2, status.toDbString());
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				Show show = new Show(rs.getString("title"),
-			   					Status.fromDbString(rs.getString("status")),
-			   					rs.getDouble("user_rating"),
-			   					rs.getString("review"),
-			   					rs.getInt("num_of_seasons"),
-			   					rs.getInt("num_of_episodes"),
-			   					rs.getInt("avg_mins_per_ep"),
-			   					rs.getInt("first_year_aired"),
-			   					rs.getInt("last_year_aired"));
-				
-				shows.add(show);
+			
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					Show show = new Show(rs.getString("title"),
+				   					Status.fromDbString(rs.getString("status")),
+				   					rs.getDouble("user_rating"),
+				   					rs.getString("review"),
+				   					rs.getInt("num_of_seasons"),
+				   					rs.getInt("num_of_episodes"),
+				   					rs.getInt("avg_mins_per_ep"),
+				   					rs.getInt("first_year_aired"),
+				   					rs.getInt("last_year_aired"));
+					
+					shows.add(show);
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -663,30 +682,35 @@ public class ShowDAOImpl implements ShowDAO {
 	public List<Show> getShowsByGenre(String genre) throws SQLException {
 		List<Show> shows = new ArrayList<>();
 		String sql = """
-				SELECT s.id, s.title, s.status, s.user_rating, s.creator, s.avg_runtime_mins
+				SELECT s.id, s.title, sr.status, sr.user_rating, sr.review, 
+				       s.num_of_seasons, s.num_of_episodes, s.avg_mins_per_ep, 
+				       s.first_year_aired, s.last_year_aired
 				FROM shows_playlists sp
 				INNER JOIN shows_playlist_items spi ON sp.id = spi.playlist_id
 				INNER JOIN shows s ON spi.show_id = s.id
 				INNER JOIN show_genres sg ON s.id = sg.show_id
 				INNER JOIN genres g ON sg.genre_id = g.id
+				LEFT JOIN shows_reviews sr ON s.id = sr.show_id AND sr.user_id = sp.user_id
 				WHERE sp.user_id = ? AND g.genre = ?
 				""";
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.setInt(1, userId);
 			stmt.setString(2, genre);
-			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {
-				Show show = new Show(rs.getString("title"),
-			   					Status.fromDbString(rs.getString("status")),
-			   					rs.getDouble("user_rating"),
-			   					rs.getString("review"),
-			   					rs.getInt("num_of_seasons"),
-			   					rs.getInt("num_of_episodes"),
-			   					rs.getInt("avg_mins_per_ep"),
-			   					rs.getInt("first_year_aired"),
-			   					rs.getInt("last_year_aired"));
-				
-				shows.add(show);
+			
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					Show show = new Show(rs.getString("title"),
+				   					Status.fromDbString(rs.getString("status")),
+				   					rs.getDouble("user_rating"),
+				   					rs.getString("review"),
+				   					rs.getInt("num_of_seasons"),
+				   					rs.getInt("num_of_episodes"),
+				   					rs.getInt("avg_mins_per_ep"),
+				   					rs.getInt("first_year_aired"),
+				   					rs.getInt("last_year_aired"));
+					
+					shows.add(show);
+				}
 			}
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
@@ -707,9 +731,10 @@ public class ShowDAOImpl implements ShowDAO {
 			stmt.setInt(1, userId);
 			stmt.setString(2, title);
 			
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				return rs.getInt("id");
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt("id");
+				}
 			}
 		}
 		
@@ -722,9 +747,10 @@ public class ShowDAOImpl implements ShowDAO {
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 			stmt.setString(1, title);
 			
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				return rs.getInt("id");
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt("id");
+				}
 			}
 		}
 		
