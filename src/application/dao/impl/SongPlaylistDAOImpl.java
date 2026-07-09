@@ -26,54 +26,67 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 	}
 	
 	@Override
-	public int createPlaylist(String name, int userId) throws SQLException {
-		int playlistId = -1;
+	public boolean createPlaylist(String name, int userId) throws SQLException {
 		
-		String sql = "INSERT INTO songs_playlists (user_id, title) VALUES (?, ?)";
-		
-		try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
-			stmt.setInt(1, userId);
-			stmt.setString(2, name);
-			stmt.executeUpdate();
-			
-			ResultSet keys = stmt.getGeneratedKeys();
-	        if (keys.next()) {
-	        	playlistId = keys.getInt(1);
-	        }
-	        System.out.println("Playlist added successfully.");
-		} catch (SQLException e) {
-			if (e.getMessage().contains("UNIQUE constraint failed")) {
-		        System.out.println("Playlist '" + name + "' is already added.");
-		    } else {
-		        System.out.println(e.getMessage());
-		    }
-		}
-	
-		return playlistId;
-	}
+		boolean answer = true;
+		String normalized = name.trim().toLowerCase();
 
+	    if (normalized.equals("all_songs") || normalized.equals("all songs")) {
+	        System.out.println(" - \"" + name + "\" is a reserved playlist name.");
+	        answer = false;
+	    }
+		
+	    if(answer)
+	    {
+			String sql = "INSERT INTO songs_playlists (user_id, title) VALUES (?, ?)";
+			
+			try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+				stmt.setInt(1, userId);
+				stmt.setString(2, name);
+				stmt.executeUpdate();
+	
+			}
+			catch (SQLException e) {
+				
+				if (e.getMessage().contains("UNIQUE constraint failed")) {
+					System.out.println(" -");
+			        System.out.println(" - Playlist \"" + name + "\" already exists!");
+			        answer = false;
+			    }
+				else
+				{
+			        answer = true;
+			    }
+			}
+	    }
+	
+		return answer;
+	}
+	
 	@Override
-	public void addSongToPlaylist(int playlistId, int songId) throws SQLException {
-		String sql = "INSERT OR IGNORE INTO songs_playlist_items (playlist_id, song_id) VALUES (?, ?)";
+	public void addSongToPlaylist(int playlistId, int songId, Status status, double rating, String review) throws SQLException {
+		String sql = "INSERT OR IGNORE INTO songs_playlist_items (playlist_id, songs_id, status, user_rating, review) VALUES (?, ?, ?, ?, ?)";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)){
 			stmt.setInt(1, playlistId);
 			stmt.setInt(2, songId);
+			stmt.setString(3, status.toDbString());
+			stmt.setDouble(4, rating);
+			stmt.setString(5, review);
 			stmt.executeUpdate();
 			
-			System.out.println("Song added successfully.");
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
 		}
 	}
-
+	
 	@Override
 	public void addSongsToPlaylist(int playlistId, List<Song> songs) throws SQLException {
 		for (Song song : songs) {
-			int songId = songDAOImpl.getSongId(song.getTitle());
+			int songId = songDAOImpl.getSongId(song.getTitle(), song.getArtist());
 			
 			if (songId != -1) {
-				String sql = "INSERT OR IGNORE INTO songs_playlist_items (playlist_id, song_id) VALUES (?, ?)";
+				String sql = "INSERT OR IGNORE INTO songs_playlist_items (playlist_id, songs_id) VALUES (?, ?)";
 				
 				try (PreparedStatement stmt = conn.prepareStatement(sql)){
 					stmt.setInt(1, playlistId);
@@ -92,15 +105,23 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 
 	@Override
 	public void removeSongFromPlaylist(int playlistId, int songId) throws SQLException {	
-		String sql = "DELETE FROM songs_playlist_items WHERE playlist_id = ? AND song_id = ?";
-		
-		try (PreparedStatement stmt = conn.prepareStatement(sql)){
-			stmt.setInt(1, playlistId);
-			stmt.setInt(2, songId);
-			stmt.executeUpdate();
-		} catch (SQLException e) {
-			System.out.println(e.getMessage());
-		}
+		String sql = """
+		        DELETE FROM songs_playlist_items
+		        WHERE playlist_id = ? AND songs_id = ?
+		        """;
+
+	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setInt(1, playlistId);
+	        stmt.setInt(2, songId);
+
+	        int rowsDeleted = stmt.executeUpdate();
+
+	        if (rowsDeleted > 0) {
+	            System.out.println(" - Song removed from playlist.");
+	        } else {
+	            System.out.println(" - Song was not found in this playlist.");
+	        }
+	    }
 	}
 
 	@Override
@@ -108,12 +129,12 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 		List<Song> items = new ArrayList<Song>();
 		
 		String sql = """
-			SELECT s.id, s.title, s.status, s.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds
+			SELECT s.id, s.title, spi.status, spi.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, spi.review
 			FROM songs_playlists sp
 			JOIN songs_playlist_items spi
 			ON sp.id = spi.playlist_id
 			JOIN songs s
-			ON spi.song_id = s.id
+			ON spi.songs_id = s.id
 			WHERE sp.user_id = ? AND sp.id = ?
 			""";
 		
@@ -123,13 +144,26 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 			
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
+				
+				String statusString = rs.getString("status");
+
+			    Status status = statusString == null
+			            ? Status.PLANNED
+			            : Status.fromDbString(statusString);
+
+			    String review = rs.getString("review");
+			    if (review == null) {
+			        review = "";
+			    }
+			    
 				Song song = new Song(rs.getString("title"),
-									 Status.fromDbString(rs.getString("status")),
+									 status,
 									 rs.getDouble("user_rating"),
 									 rs.getString("album"),
 									 rs.getString("artist"),
 									 rs.getInt("year_released"),
-									 rs.getInt("runtime_seconds"));
+									 rs.getInt("runtime_seconds"),
+									 rs.getString("review"));
 				
 				items.add(song);
 			}
@@ -149,9 +183,10 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 			
 			ResultSet rs = stmt.executeQuery();
 			while (rs.next()) {
-				List<Song> items = getSongsInPlaylist(rs.getInt("id"));
+				int playlistId = rs.getInt("id");
+				List<Song> items = getSongsInPlaylist(playlistId);
 				
-				SongPlaylist playlist = new SongPlaylist(rs.getString("title"), items);
+				SongPlaylist playlist = new SongPlaylist(rs.getString("title"), items, playlistId);
 				
 				playlists.add(playlist);
 			}
@@ -179,5 +214,77 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 			System.out.println(e.getMessage());
 		}
 	}
+	
+	public int countStatusedSongs(int playlistId, Status status) throws SQLException {
+	    String sql = """
+	        SELECT COUNT(*)
+	        FROM songs_playlist_items
+	        WHERE playlist_id = ?
+	          AND LOWER(REPLACE(status, '_', ' ')) = LOWER(?)
+	    """;
 
+	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setInt(1, playlistId);
+	        stmt.setString(2, status.toDbString());
+
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            return rs.next() ? rs.getInt(1) : 0;
+	        }
+	    }
+	}
+	
+	public double calculateAvgRating(int playlistId) throws SQLException {
+		String sql = """
+		        SELECT AVG(user_rating)
+		        FROM songs_playlist_items
+		        WHERE playlist_id = ?
+		          AND LOWER(REPLACE(status, '_', ' ')) = LOWER(?)
+		          AND user_rating > 0
+		    """;
+		
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+		    stmt.setInt(1, playlistId);
+		    stmt.setString(2, Status.COMPLETED.toDbString());
+		    
+
+		    try (ResultSet rs = stmt.executeQuery()) {
+		        if (rs.next()) {
+		            return rs.getDouble(1);
+		        }
+		    }
+		}
+
+		return 0.0;
+	}
+	
+	public void updateAllPlaylists(Song song) throws SQLException {
+		String sql = """
+			    UPDATE songs_playlist_items
+			    SET status = ?,
+			        user_rating = ?,
+			        review = ?
+			    WHERE songs_id IN (
+			        SELECT id
+			        FROM songs
+			        WHERE title = ?
+			          AND artist = ?
+			    )
+			    AND playlist_id IN (
+			        SELECT id
+			        FROM songs_playlists
+			        WHERE user_id = ?
+			    )
+			    """;
+	    
+	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setString(1, song.getStatus().toDbString());
+	        stmt.setDouble(2, song.getUserRating());
+	        stmt.setString(3, song.getReview());
+	        stmt.setString(4, song.getTitle());
+	        stmt.setString(5, song.getArtist());
+	        stmt.setInt(6, userId);
+
+	        stmt.executeUpdate();
+	    }
+	}
 }

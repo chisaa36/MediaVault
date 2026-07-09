@@ -2,6 +2,7 @@ package application.model;
 
 public class Song {
 	
+	private int songId;
 	private String title;
 	private Status status;
 	private double userRating;
@@ -21,7 +22,15 @@ public class Song {
         this.runtimeSeconds = runtimeSeconds;
         this.review = review;
     }
-
+    
+    public int getSongId() {
+    	return songId;
+    }
+    
+    public void setSongId(int songId) {
+    	this.songId = songId;
+    }
+    
     public String getTitle() {
         return title;
     }
@@ -45,7 +54,7 @@ public class Song {
     		return String.valueOf(userRating);
     	}
     	
-    	return "complete to rate";
+    	return "/-complete to rate-/";
     }
     
     public void setUserRating(double userRating) {
@@ -93,6 +102,6 @@ public class Song {
 	    		return "yes";
     	}
     	
-    	return "complete to review";
+    	return "/-complete to review-/";
     }
 }

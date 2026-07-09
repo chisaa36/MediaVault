@@ -66,7 +66,7 @@ public class GameDAOImpl implements GameDAO{
 	@Override
 	public Game getGameById(int gameId) throws SQLException {
 		String sql = """
-				SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
+				SELECT g.id, g.title, g.status, g.user_rating, g.review, g.developer, g.avg_playtime_mins
 				FROM games_playlists gp
 				INNER JOIN games_playlist_items gpi
 				ON gp.id = gpi.playlist_id
@@ -83,6 +83,7 @@ public class GameDAOImpl implements GameDAO{
 				return new Game(rs.getString("title"),
 								Status.fromDbString(rs.getString("status")),
 								rs.getDouble("user_rating"),
+								rs.getString("review"),
 								rs.getString("developer"),
 								rs.getInt("avg_playtime_mins"));
 			}
@@ -99,7 +100,7 @@ public class GameDAOImpl implements GameDAO{
 	@Override
 	public Game getGameByTitle(String title) throws SQLException {		
 		String sql = """
-		        SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
+		        SELECT g.id, g.title, g.status, g.user_rating, g.review, g.developer, g.avg_playtime_mins
 		        FROM games_playlists gp
 		        JOIN games_playlist_items gpi ON gp.id = gpi.playlist_id
 		        JOIN games g ON gpi.game_id = g.id
@@ -114,6 +115,7 @@ public class GameDAOImpl implements GameDAO{
 		    	return new Game(title,
 		    					Status.fromDbString(rs.getString("status")),
 		    					rs.getDouble("user_rating"),
+		    					rs.getString("review"),
 		    					rs.getString("developer"),
 		    					rs.getInt("avg_playtime_mins"));
 		    } else {
@@ -131,7 +133,7 @@ public class GameDAOImpl implements GameDAO{
 		List<Game> games = new ArrayList<>();
 
 		String sql = """
-				SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
+				SELECT g.id, g.title, g.status, g.user_rating, g.review, g.developer, g.avg_playtime_mins
 				FROM games_playlists gp
 				INNER JOIN games_playlist_items gpi
 				ON gp.id = gpi.playlist_id
@@ -148,6 +150,7 @@ public class GameDAOImpl implements GameDAO{
 					rs.getString("title"),
 					Status.fromDbString(rs.getString("status")),
 					rs.getDouble("user_rating"),
+					rs.getString("review"),
 					rs.getString("developer"),
 					rs.getInt("avg_playtime_mins")
 				);

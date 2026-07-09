@@ -125,7 +125,7 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 		
 		String sql = """
 
-			SELECT g.id, g.title, g.status, g.user_rating, g.developer, g.avg_playtime_mins
+			SELECT g.id, g.title, g.status, g.user_rating, g.review, g.developer, g.avg_playtime_mins
 			FROM games_playlists gp
 			JOIN games_playlist_items gpi
 			ON gp.id = gpi.playlist_id
@@ -143,6 +143,7 @@ public class GamePlaylistDAOImpl implements GamePlaylistDAO {
 				Game game = new Game(rs.getString("title"),
 									 Status.fromDbString(rs.getString("status")),
 									 rs.getDouble("user_rating"),
+									 rs.getString("review"),
 									 rs.getString("developer"),
 									 rs.getInt("avg_playtime_mins"));
 				

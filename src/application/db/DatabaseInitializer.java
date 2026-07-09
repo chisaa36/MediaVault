@@ -138,9 +138,10 @@ public class DatabaseInitializer {
 			    user_rating REAL,
 			    review TEXT,
 				
-				PRIMARY KEY (playlist_id, song_id),
+				UNIQUE(playlist_id, songs_id),
+				
 				FOREIGN KEY (playlist_id) REFERENCES songs_playlists(id),
-				FOREIGN KEY (song_id) REFERENCES songs(id)
+				FOREIGN KEY (songs_id) REFERENCES songs(id)
  			)""");
 			
 			// create shows_playlist_items table

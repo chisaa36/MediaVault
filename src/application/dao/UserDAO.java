@@ -33,14 +33,14 @@ public class UserDAO {
     }
     
     public int getUserID(String username) throws SQLException {
-        String sql = "SELECT id FROM users WHERE username = ?";
+        String sql = "SELECT user_id FROM users WHERE username = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt("id");
+                    return rs.getInt("user_id");
                 }
             }
         }

@@ -5,7 +5,7 @@ public class Show {
 	private String title;
 	private Status status;
 	private double userRating;
-	private String review;
+	//private String review;
 	private int numOfSeasons;
 	private int numOfEpisodes;
 	private int avgMinsPerEp;
@@ -17,7 +17,7 @@ public class Show {
 		this.title = title;
 		this.status = status;
 		this.userRating = userRating;
-		this.review = review
+		//this.review = review
 		this.numOfSeasons = numOfSeasons;
 		this.numOfEpisodes = numOfEpisodes;
 		this.avgMinsPerEp = avgMinsPerEp;
