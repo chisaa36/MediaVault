@@ -18,13 +18,7 @@ public class Media {
 	// getters and setters
 	public String getTitle() {return title;}
 	public Status getStatus() {return status;}
-	public String getUserRatingString() { 	
-	    if(status == Status.COMPLETED) {
-	    	return String.valueOf(userRating);
-	    }
-	    	
-	    return "complete to rate";
-	}
+	public double getUserRating() {return userRating;}
 	public String getReview() {
 		if(status == Status.COMPLETED) {
 			if(review.equals(""))
@@ -40,4 +34,12 @@ public class Media {
 	public void setStatus(Status status) {this.status = status;}
 	public void setUserRating(double userRating) {this.userRating = userRating;}
 	public void setReview(String review) {this.review = review;}
+	
+	public String getUserRatingString() { 	
+	    if(status == Status.COMPLETED) {
+	    	return String.valueOf(userRating);
+	    }
+	    	
+	    return "complete to rate";
+	}
 }

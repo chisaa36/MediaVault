@@ -2,6 +2,7 @@ package application.model;
 
 public class Song extends Media{
 	
+	private int songId;
 	private String album;
 	private String artist;
 	private int yearReleased;
@@ -16,6 +17,7 @@ public class Song extends Media{
     }
     
     // getters
+    public int getSongId() {return songId;}
     public String getAlbum() {return album;}
     public String getArtist() {return artist;}
     public int getYearReleased() {return yearReleased;}
@@ -26,4 +28,6 @@ public class Song extends Media{
 
         return String.format("%d:%02d", minutes, seconds);
     }
+    
+    public void setSongId(int songId) {this.songId = songId;}
 }
