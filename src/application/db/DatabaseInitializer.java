@@ -2,8 +2,6 @@ package application.db;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-//import java.sql.PreparedStatement;
-//import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -81,7 +79,7 @@ public class DatabaseInitializer {
 				title TEXT NOT NULL,
 				UNIQUE (user_id, title),
 				
-				FOREIGN KEY (user_id) REFERENCES users(user_id)
+				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
 			
 			// create songs_playlists table
@@ -94,7 +92,7 @@ public class DatabaseInitializer {
 				UNIQUE (user_id, title),
 				
 				UNIQUE(user_id, title),
-				FOREIGN KEY (user_id) REFERENCES users(user_id)
+				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
 			
 			// create shows_playlists table
@@ -105,7 +103,7 @@ public class DatabaseInitializer {
 				title TEXT NOT NULL,
 				UNIQUE (user_id, title),
 				
-				FOREIGN KEY (user_id) REFERENCES users(user_id)
+				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
 			
 			// create games_playlist_items table
@@ -262,6 +260,7 @@ public class DatabaseInitializer {
 	
 	public static int registerUser(Connection conn, int userId) throws SQLException {
 		// add "all" entries category if user is added
+		System.out.println("ADDINGGGGGGGG");
 		String sql = "INSERT OR IGNORE INTO games_playlists (user_id, title) VALUES (?, ?)";
 		try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setInt(1, userId);

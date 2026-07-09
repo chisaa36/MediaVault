@@ -25,7 +25,7 @@ public class GameDAOImpl implements GameDAO{
 	@Override
 	public int addGame(Game game) throws SQLException {
 		int gameId = -1;
-		String sql = "INSERT INTO games (title, developer, avg_playtime_mins) VALUES (?, ?, ?)";
+		String sql = "INSERT OR IGNORE INTO games (title, developer, avg_playtime_mins) VALUES (?, ?, ?)";
 
 	    try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 	        stmt.setString(1, game.getTitle());
@@ -39,34 +39,72 @@ public class GameDAOImpl implements GameDAO{
 	        }
 	        System.out.println("Game added successfully.");
 		} catch (SQLException e) {
-			if (e.getMessage().contains("UNIQUE constraint failed")) {
-		        System.out.println("Game '" + game.getTitle() + "' is already added.");
-		    } else {
-		        System.out.println(e.getMessage()); // print other unexpected errors normally
+		    e.printStackTrace();
+		    throw e;
+		}
+	    	
+	    	// a duplicate game would have a gameId = 0
+			if (gameId <= 0) {
+		    System.out.println("Game '" + game.getTitle() + "' is already added.");
+		    
+		    sql = "SELECT id FROM games WHERE title = ?";
+		    
+		    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+		        stmt.setString(1, game.getTitle());
+		        try (ResultSet rs = stmt.executeQuery()) {
+		            if (rs.next()) {
+		                gameId = rs.getInt("id");
+		            }
+		        }
 		    }
 		}
 		
-		// add game to "all_games" playlist	if game is added
-		// having a gameId == -1 means that game already exists.
-		if (gameId != -1) {
-			sql = "INSERT INTO games_reviews (user_id, game_id, status, user_rating, review) VALUES (?, ?, ?)";
-	        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-	            stmt.setInt(1, userId);
-	            stmt.setInt(2, gameId);
-	            stmt.setString(3, game.getStatus().toDbString());
-	            stmt.setDouble(4, game.getUserRating());
-	            stmt.setString(5, game.getReview());
-	            stmt.executeUpdate();
-	        }
-			
-			sql = "INSERT OR IGNORE INTO games_playlist_items (playlist_id, game_id) VALUES (?, ?)";
-			try (PreparedStatement stmt = conn.prepareStatement(sql)){
-				stmt.setInt(1, 1);
-				stmt.setInt(2, gameId);
-				stmt.executeUpdate();
-			}
+		if (gameId == -1) {
+		    System.out.println("Could not resolve game id for '" + game.getTitle() + "'.");
+		    return -1;
 		}
-	
+		
+		int playlistId = -1;
+		sql = "SELECT id FROM games_playlists WHERE user_id = ? AND title = 'all_games'";
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+		    stmt.setInt(1, userId);
+		    try (ResultSet rs = stmt.executeQuery()) {
+		        if (rs.next()) {
+		            playlistId = rs.getInt("id");
+		        }
+		    }
+		}
+		
+		if (playlistId == -1) {
+		    sql = "INSERT INTO games_playlists (user_id, title) VALUES (?, 'all_games')";
+		    try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+		        stmt.setInt(1, userId);
+		        
+		        stmt.executeUpdate();
+		        try (ResultSet keys = stmt.getGeneratedKeys()) {
+		            if (keys.next()) {
+		                playlistId = keys.getInt(1);
+		            }
+		        }
+		    }
+		}
+		
+		sql = "INSERT OR IGNORE INTO games_reviews (user_id, game_id, status, user_rating, review) VALUES (?, ?, ?, ?, ?)";
+	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setInt(1, userId);
+	        stmt.setInt(2, gameId);
+	        stmt.setString(3, game.getStatus().toDbString());
+	        stmt.setDouble(4, game.getUserRating());
+	        stmt.setString(5, game.getReview());
+	        stmt.executeUpdate();
+	    }
+		
+		sql = "INSERT OR IGNORE INTO games_playlist_items (playlist_id, game_id) VALUES (?, ?)";
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setInt(1, playlistId);
+			stmt.setInt(2, gameId);
+			stmt.executeUpdate();
+		}
 		return gameId;
 	}
 
@@ -143,16 +181,14 @@ public class GameDAOImpl implements GameDAO{
 	public Game getGameByTitle(String title) throws SQLException {		
 		String sql = """
 		        SELECT g.id, g.title, r.status, r.user_rating, r.review, g.developer, g.avg_playtime_mins
-		        FROM games_playlists gp
-		        JOIN games_playlist_items gpi ON gp.id = gpi.playlist_id
-		        JOIN games g ON gpi.game_id = g.id
-		        LEFT JOIN games_reviews r ON g.id = r.game_id AND r.user_id = gp.user_id
-		        WHERE g.title = ? AND gp.user_id = ?
+		        FROM games g
+		        LEFT JOIN games_reviews r ON g.id = r.game_id AND r.user_id = ?
+		        WHERE g.title = ?
 		    """;
 
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setString(1, title);
-		    stmt.setInt(2, userId);
+		    stmt.setInt(1, userId);
+			stmt.setString(2, title);
 		    ResultSet rs = stmt.executeQuery();
 		    if (rs.next()) {
 		    	return new Game(rs.getString("title"),

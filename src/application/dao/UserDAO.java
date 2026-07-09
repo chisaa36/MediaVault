@@ -72,6 +72,12 @@ public class UserDAO {
             ps.setString(2, password);
 
             ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+		        if (keys.next()) {
+		        	userId = keys.getInt(1);
+		        }
+		    }
+            
         } catch (SQLException e) {
 			if (e.getMessage().contains("UNIQUE constraint failed")) {
 		        System.out.println("Username '" + username + "' is already taken.");
