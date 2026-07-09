@@ -25,16 +25,14 @@ public class GameDAOImpl implements GameDAO{
 	@Override
 	public int addGame(Game game) throws SQLException {
 		int gameId = -1;
-		String sql = "INSERT INTO games (title, status, user_rating, developer, avg_playtime_mins) VALUES (?, ?, ?, ?, ?)";
-		
-		try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
-			// add game to `games` table
-			stmt.setString(1, game.getTitle());
-			stmt.setString(2, game.getStatus().toDbString());
-			stmt.setDouble(3, game.getUserRating());
-			stmt.setString(4, game.getDeveloper());
-			stmt.setInt(5, game.getAvgPlaytimeMins());
-			stmt.executeUpdate();
+		String sql = "INSERT INTO games (title, developer, avg_playtime_mins) VALUES (?, ?, ?)";
+
+	    try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+	        stmt.setString(1, game.getTitle());
+	        stmt.setString(2, game.getDeveloper());
+	        stmt.setInt(3, game.getAvgPlaytimeMins());
+	        stmt.executeUpdate();
+	        
 			ResultSet keys = stmt.getGeneratedKeys();
 	        if (keys.next()) {
 	            gameId = keys.getInt(1);
@@ -51,8 +49,17 @@ public class GameDAOImpl implements GameDAO{
 		// add game to "all_games" playlist	if game is added
 		// having a gameId == -1 means that game already exists.
 		if (gameId != -1) {
-			sql = "INSERT OR IGNORE INTO games_playlist_items (playlist_id, game_id)"
-				+ " VALUES (?, ?)";
+			sql = "INSERT INTO games_reviews (user_id, game_id, status, user_rating, review) VALUES (?, ?, ?)";
+	        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	            stmt.setInt(1, userId);
+	            stmt.setInt(2, gameId);
+	            stmt.setString(3, game.getStatus().toDbString());
+	            stmt.setDouble(4, game.getUserRating());
+	            stmt.setString(5, game.getReview());
+	            stmt.executeUpdate();
+	        }
+			
+			sql = "INSERT OR IGNORE INTO games_playlist_items (playlist_id, game_id) VALUES (?, ?)";
 			try (PreparedStatement stmt = conn.prepareStatement(sql)){
 				stmt.setInt(1, 1);
 				stmt.setInt(2, gameId);
@@ -63,6 +70,24 @@ public class GameDAOImpl implements GameDAO{
 		return gameId;
 	}
 
+	/**
+	 * Queries the database using a series of {@code JOIN}s from {@code games_playlists} up to 
+	 * {@code games_reviews} to retrieve a game specified by its {@code title}
+	 * @param title the title of the game
+	 * @pre <ul> 
+	 * <li>The database {@code conn} must be open, active, and valid.</li>
+	 * <li>The {@code title} parameter must not be an empty or null String.</li>
+	 * </ul>
+	 * @post <ul> 
+	 * <li>Returns the {@code Game} with its corresponding features</li>
+	 * <li>If the game is not found within the database, null is returned.</li>
+	 * <li>The state of the database remains unchanged.</li>
+	 * </ul>
+	 * @return the {@code Game} that is being retrieved by the user;
+	 * returns null if the game is not found.
+	 * @throws SQLException if a database access error or the connection is lost during the 
+	 * method's execution
+	 */
 	@Override
 	public Game getGameById(int gameId) throws SQLException {
 		String sql = """
@@ -96,6 +121,24 @@ public class GameDAOImpl implements GameDAO{
 		return null;
 	}
 
+	/**
+	 * Queries the database using a series of {@code JOIN}s from {@code games_playlists} up to 
+	 * {@code games_reviews} to retrieve a game specified by its {@code title}
+	 * @param title the title of the game
+	 * @pre <ul> 
+	 * <li>The database {@code conn} must be open, active, and valid.</li>
+	 * <li>The {@code title} parameter must not be an empty or null String.</li>
+	 * </ul>
+	 * @post <ul> 
+	 * <li>Returns the {@code Game} with its corresponding features</li>
+	 * <li>If the game is not found within the database, null is returned.</li>
+	 * <li>The state of the database remains unchanged.</li>
+	 * </ul>
+	 * @return the {@code Game} that is being retrieved by the user;
+	 * returns null if the game is not found.
+	 * @throws SQLException if a database access error or the connection is lost during the 
+	 * method's execution
+	 */
 	@Override
 	public Game getGameByTitle(String title) throws SQLException {		
 		String sql = """
@@ -127,7 +170,26 @@ public class GameDAOImpl implements GameDAO{
 		
 		return null;
 	}
-
+	
+	/**
+	 * Queries the database using a series of {@code JOIN}s from {@code games_playlists} up to 
+	 * {@code games_reviews} to retrieve a user's list of {@code Game}s based on their id
+	 * @param userId the user's id
+	 * @pre <ul> 
+	 * <li>The database {@code conn} must be open, active, and valid.</li>
+	 * <li>The {@code userId} parameter must be valid, that is, id > 0 and a user exists in that
+	 * id.</li>
+	 * </ul>
+	 * @post <ul> 
+	 * <li>Returns a {@code List<Game>} containing all games of the specified {@code userId} across
+	 * all playlists.</li>
+	 * <li>If the user does not have any games, an empty {@code List<Game>} is returned.</li>
+	 * <li>The state of the database remains unchanged.</li>
+	 * </ul>
+	 * @return the {@code List<Game>} containing the user's games across all playlists
+	 * @throws SQLException if a database access error or the connection is lost during the 
+	 * method's execution
+	 */
 	@Override
 	public List<Game> getGamesByUser(int userId) throws SQLException {
 		List<Game> games = new ArrayList<>();
@@ -161,6 +223,28 @@ public class GameDAOImpl implements GameDAO{
 		return games;
 	}
 	
+	/**
+	 * Processes a space-separated string of genres. New genres are inserted into the database and
+	 * retrieving the id of the last processed genre.
+	 * @param string a space-separated String containing the genre or list of genres to add
+	 * @pre <ul> 
+	 * <li>The database {@code conn} must be open, active, and valid.</li>
+	 * <li>The {@code string} parameter must not be null nor empty wherein genre names are
+	 * separated by a single space.</li>
+	 * </ul>
+	 * @post <ul> 
+	 * <li>Any genre names from the input string that does not already exist will be added to the
+	 * database.</li>
+	 * <li>Existing genre names, however, will be ignored by the insert query because of the 
+	 * {@code IGNORE} keyword. Nevertheless, the genre id will still be resolved by the 
+	 * {@code SELECT} query.</li>
+	 * <li>If the input string is empty, the database state remains unchanged.</li>
+	 * </ul>
+	 * @return the integer id of the last processed genre in the sequence;
+	 * returns -1 if no genres were successfully processed.
+	 * @throws SQLException if a database access error or the connection is lost during the 
+	 * method's execution
+	 */
 	@Override
 	public int addGenre(String string) throws SQLException {
 		int lastGenreId = -1;
@@ -196,6 +280,9 @@ public class GameDAOImpl implements GameDAO{
 		return lastGenreId;
 	}
 	
+	/**
+	 * 
+	 */
 	@Override
 	public void linkGameGenre(int gameId, int genreId) throws SQLException {
 	    String sql = "INSERT OR IGNORE INTO game_genres (game_id, genre_id) VALUES (?, ?)";
