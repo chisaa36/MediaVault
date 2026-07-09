@@ -54,10 +54,34 @@ public class ShowDAOImpl implements ShowDAO {
 		}
 		
 		if (showId != -1) {
+			int playlistId = -1;
+			String playlistSql = "SELECT id FROM shows_playlists WHERE user_id = ? AND title = 'all_shows'";
+			try (PreparedStatement stmt = conn.prepareStatement(playlistSql)) {
+				stmt.setInt(1, userId);
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						playlistId = rs.getInt("id");
+					}
+				}
+			}
+			
+			if (playlistId == -1) {
+				String insertPlaylistSql = "INSERT INTO shows_playlists (user_id, title) VALUES (?, 'all_shows')";
+				try (PreparedStatement stmt = conn.prepareStatement(insertPlaylistSql, Statement.RETURN_GENERATED_KEYS)) {
+					stmt.setInt(1, userId);
+					stmt.executeUpdate();
+					try (ResultSet keys = stmt.getGeneratedKeys()) {
+						if (keys.next()) {
+							playlistId = keys.getInt(1);
+						}
+					}
+				}
+			}
+			
 			sql = "INSERT OR IGNORE INTO shows_playlist_items (playlist_id, show_id)"
 				+ " VALUES (?, ?)";
 			try (PreparedStatement stmt = conn.prepareStatement(sql)){
-				stmt.setInt(1, 1);
+				stmt.setInt(1, playlistId);
 				stmt.setInt(2, showId);
 				stmt.executeUpdate();
 			}
