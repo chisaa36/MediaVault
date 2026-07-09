@@ -22,14 +22,42 @@ public class SongDAOImpl implements SongDAO {
 		this.userId = userId;
 	}
 	
-	@Override
-	public int addSong(Song song, int userId) throws SQLException {
+	public boolean isNewSong(Song song, int userId) throws SQLException {
+		
+		boolean answer = false;
+		int songId = -1;
 
+        String findSongSql = """
+            SELECT id FROM songs
+            WHERE title = ? AND artist = ?
+        """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(findSongSql)) {
+            stmt.setString(1, song.getTitle());
+            stmt.setString(2, song.getArtist());
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                songId = rs.getInt("id");
+                song.setSongId(songId);
+            }
+        }
+
+        if (songId == -1)
+        	answer = true;
+        else
+        	answer = false;
+
+	    return answer;
+	}
+	
+	public int addSong(Song song, int userId) throws SQLException {
+		
 	    int songId = -1;
 	    int playlistId = -1;
 
 	    try {
-	        conn.setAutoCommit(false);
 
 	        // 1. Check if song already exists
 	        String findSongSql = """
@@ -115,8 +143,6 @@ public class SongDAOImpl implements SongDAO {
 	            VALUES (?, ?, ?, ?, ?)
 	        """;
 
-	        int rowsInserted = 0;
-
 	        try (PreparedStatement stmt = conn.prepareStatement(insertItemSql)) {
 	            stmt.setInt(1, playlistId);
 	            stmt.setInt(2, songId);
@@ -124,32 +150,20 @@ public class SongDAOImpl implements SongDAO {
 	            stmt.setDouble(4, song.getUserRating());
 	            stmt.setString(5, song.getReview());
 
-	            rowsInserted = stmt.executeUpdate();
+	            stmt.executeUpdate();
 	        }
-
-	        conn.commit();
-
-	        if(rowsInserted>0)
-	            System.out.println(" - " + song.getTitle() + " by " + song.getArtist() + " added successfully!");
-	        else
-	            System.out.println(" - " + song.getTitle() + " by " + song.getArtist() + " is already in your songs!");
 
 	    }
 	    catch (SQLException e) {
-	        conn.rollback();
 	        throw e;
-
-	    } finally {
-	        conn.setAutoCommit(true);
 	    }
 
 	    return songId;
 	}
 	
-	@Override
-	public Song getSongById(int songId) throws SQLException {
+	public Song getSongOfUserById(int songId) throws SQLException {
 		String sql = """
-				SELECT s.id, s.title, s.status, s.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, s.review
+				SELECT s.id, s.title, spi.status, spi.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, spi.review
 				FROM songs_playlists sp
 				INNER JOIN songs_playlist_items spi
 				ON sp.id = spi.playlist_id
@@ -182,7 +196,6 @@ public class SongDAOImpl implements SongDAO {
 		return null;
 	}
 	
-	@Override
 	public Song getSongByTitle(String title) throws SQLException {
 		String sql = """
 		        SELECT s.id, s.title, s.status, s.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, s.review
@@ -215,7 +228,6 @@ public class SongDAOImpl implements SongDAO {
 		return null;
 	}
 	
-	@Override
 	public List<Song> getSongsByUser(int userId) throws SQLException {
 	    List<Song> songs = new ArrayList<>();
 
@@ -267,7 +279,6 @@ public class SongDAOImpl implements SongDAO {
 	    return songs;
 	}
 	
-	@Override
 	public List<Song> getSongsByArtist(String artist, int userId) throws SQLException{
 		List<Song> songs = new ArrayList<>();
 
@@ -304,37 +315,46 @@ public class SongDAOImpl implements SongDAO {
 		return songs;
 	}
 	
-	@Override
-	public void deleteSong(int userId, String title, String artist) throws SQLException {
+	public int deleteSong(int userId, String title, String artist) throws SQLException {
+		
+	    int songId = getSongId(title, artist), result = 1;
 
-	    String sql = """
-	        DELETE FROM songs_playlist_items
-	        WHERE songs_id = (
-	            SELECT id FROM songs
-	            WHERE title = ? AND artist = ?
-	        )
-	        AND playlist_id = (
-	            SELECT id FROM songs_playlists
-	            WHERE user_id = ? AND title = 'all_songs'
-	        )
-	    """;
-
-	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-	        stmt.setString(1, title);
-	        stmt.setString(2, artist);
-	        stmt.setInt(3, userId);
-
-	        int rowsDeleted = stmt.executeUpdate();
-
-	        if (rowsDeleted > 0) {
-	            System.out.println("  - " + title + " by " + artist + " was successfully removed!");
-	        } else {
-	            System.out.println("  - " + title + " by " + artist + " was not found in your songs.");
-	        }
+	    if (songId == -1) {
+	        result = 0;
 	    }
+	    
+	    if(result != 0)
+	    {
+		    String sql = """
+		        DELETE FROM songs_playlist_items
+		        WHERE songs_id = ?
+		        AND playlist_id IN (
+		            SELECT id
+		            FROM songs_playlists
+		            WHERE user_id = ?
+		        )
+		        """;
+	
+		    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+		        stmt.setInt(1, songId);
+		        stmt.setInt(2, userId);
+	
+		        int rowsDeleted = stmt.executeUpdate();
+	
+		        if (rowsDeleted > 0)
+		        {
+		        	result = 1;
+		        }
+		        else
+		        {
+		        	result = 2;
+		        }
+		    }
+	    }
+	    
+	    return result;
 	}
 	
-	@Override
 	public void updateSongRating(int userId, Song song, double rating) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items
@@ -358,8 +378,6 @@ public class SongDAOImpl implements SongDAO {
 	        stmt.executeUpdate();
 	    }
 	}
-	
-	@Override
 	public void addReview(int userId, Song song, String review) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items
@@ -384,7 +402,6 @@ public class SongDAOImpl implements SongDAO {
 	    }
 	}
 	
-	@Override
 	public void updateStatus(int userId, Song song, Status newStatus) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items
@@ -409,5 +426,37 @@ public class SongDAOImpl implements SongDAO {
 
 	        stmt.executeUpdate();
 	    }
+	}
+	
+	public int getSongId(String title, String artist) throws SQLException {
+
+	    String sql = "SELECT id FROM songs WHERE title = ? AND artist = ?";
+
+	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setString(1, title);
+	        stmt.setString(2, artist);
+
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt("id");
+	            }
+	        }
+	    }
+
+	    return -1;
+	}
+	
+	public int getNextSongId(Song song, int userId) throws SQLException {
+		
+		String sql = "SELECT MAX(id) AS maxId FROM songs";
+
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+		    ResultSet rs = stmt.executeQuery();
+
+		    if (rs.next())
+		        return rs.getInt("maxId") + 1;
+		}
+
+		return 1;
 	}
 }
