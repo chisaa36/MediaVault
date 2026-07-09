@@ -424,7 +424,7 @@ public class Main {
 	    int ctr = 1;
 
 	    for (Song song : songs)
-	    	System.out.printf("| %-3d | %-23s | %-6s | %-4s | %-17s | %-13s | %-20s | %-22s |%n", ctr++, fitToSpace(song.getTitle(), 23), song.getRuntimeString(), String.valueOf(song.getYearReleased()), fitToSpace(song.getArtist(), 17), song.getStatus().toDbString(), song.getUserRatingString(), song.getReviewedStatus(song.getReview()));
+	    	System.out.printf("| %-3d | %-23s | %-6s | %-4s | %-17s | %-13s | %-20s | %-22s |%n", ctr++, fitToSpace(song.getTitle(), 23), song.getRuntimeString(), String.valueOf(song.getYearReleased()), fitToSpace(song.getArtist(), 17), song.getStatus().toDbString(), song.getUserRatingString(), song.getReviewedStatus());
 
 	    System.out.println("-------------------------------------------------------------------------------------------------------------------------------------\n");
 	}

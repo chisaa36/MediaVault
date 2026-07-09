@@ -1,11 +1,7 @@
 package application.model;
 
-public class Show {
+public class Show extends Media {
 	
-	private String title;
-	private Status status;
-	private double userRating;
-	//private String review;
 	private int numOfSeasons;
 	private int numOfEpisodes;
 	private int avgMinsPerEp;
@@ -13,11 +9,8 @@ public class Show {
 	private int lastYearAired;
 	
 	// constructor
-	public Show(String title, Status status, double userRating, int numOfSeasons, int numOfEpisodes, int avgMinsPerEp, int firstYearAired, int lastYearAired) {
-		this.title = title;
-		this.status = status;
-		this.userRating = userRating;
-		//this.review = review
+	public Show(String title, Status status, double userRating, String review, int numOfSeasons, int numOfEpisodes, int avgMinsPerEp, int firstYearAired, int lastYearAired) {
+		super(title, status, userRating, review);
 		this.numOfSeasons = numOfSeasons;
 		this.numOfEpisodes = numOfEpisodes;
 		this.avgMinsPerEp = avgMinsPerEp;
@@ -26,18 +19,12 @@ public class Show {
 	}
 	
 	// getters and setters
-	public String getTitle() {return title;}
-	public Status getStatus() {return status;}
-	public double getUserRating() {return userRating;}
 	public int getNumOfSeasons() {return numOfSeasons;}
 	public int getNumOfEpisodes() {return numOfEpisodes;}
 	public int getAvgMinsPerEp() {return avgMinsPerEp;}
 	public int getFirstYearAired() {return firstYearAired;}
 	public int getLastYearAired() {return lastYearAired;}
 	
-	public void setTitle(String title) {this.title=title;}
-	public void setTitle(Status status) {this.status=status;}
-	public void setUserRating(double userRating) {this.userRating=userRating;}
 	public void setNumOfSeasons(int numOfSeasons) {this.numOfSeasons=numOfSeasons;}
 	public void setNumOfEpisodes(int numOfEpisodes) {this.numOfEpisodes=numOfEpisodes;}
 	public void setAvgMinsPerEp(int avgMinsPerEp) {this.avgMinsPerEp=avgMinsPerEp;}

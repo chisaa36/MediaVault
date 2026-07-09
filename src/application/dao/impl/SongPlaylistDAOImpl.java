@@ -17,12 +17,10 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 
 	private Connection conn;
 	private int userId;
-	private SongDAOImpl songDAOImpl; // Assuming a similar structure to gamesDAOImpl for IDs
 	
 	public SongPlaylistDAOImpl(Connection conn, int userId) {
 		this.conn = conn;
 		this.userId = userId;
-		this.songDAOImpl = new SongDAOImpl(conn, userId);
 	}
 	
 	@Override
@@ -82,8 +80,9 @@ public class SongPlaylistDAOImpl implements SongPlaylistDAO {
 	
 	@Override
 	public void addSongsToPlaylist(int playlistId, List<Song> songs) throws SQLException {
+		
 		for (Song song : songs) {
-			int songId = songDAOImpl.getSongId(song.getTitle(), song.getArtist());
+			int songId = song.getSongId();
 			
 			if (songId != -1) {
 				String sql = "INSERT OR IGNORE INTO songs_playlist_items (playlist_id, songs_id) VALUES (?, ?)";

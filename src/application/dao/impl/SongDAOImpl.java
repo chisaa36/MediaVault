@@ -196,6 +196,7 @@ public class SongDAOImpl implements SongDAO {
 		return null;
 	}
 	
+	@Override
 	public Song getSongByTitle(String title) throws SQLException {
 		String sql = """
 		        SELECT s.id, s.title, s.status, s.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, s.review
@@ -228,6 +229,7 @@ public class SongDAOImpl implements SongDAO {
 		return null;
 	}
 	
+	@Override
 	public List<Song> getSongsByUser(int userId) throws SQLException {
 	    List<Song> songs = new ArrayList<>();
 
@@ -279,6 +281,7 @@ public class SongDAOImpl implements SongDAO {
 	    return songs;
 	}
 	
+	@Override
 	public List<Song> getSongsByArtist(String artist, int userId) throws SQLException{
 		List<Song> songs = new ArrayList<>();
 
@@ -355,6 +358,7 @@ public class SongDAOImpl implements SongDAO {
 	    return result;
 	}
 	
+	@Override
 	public void updateSongRating(int userId, Song song, double rating) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items
@@ -378,6 +382,8 @@ public class SongDAOImpl implements SongDAO {
 	        stmt.executeUpdate();
 	    }
 	}
+	
+	@Override
 	public void addReview(int userId, Song song, String review) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items
@@ -402,6 +408,7 @@ public class SongDAOImpl implements SongDAO {
 	    }
 	}
 	
+	@Override
 	public void updateStatus(int userId, Song song, Status newStatus) throws SQLException {
 	    String sql = """
 	        UPDATE songs_playlist_items

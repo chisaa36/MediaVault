@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+
+import application.db.DatabaseInitializer;
 
 public class UserDAO {
 	
@@ -61,14 +64,32 @@ public class UserDAO {
     }
 
     public void addUser(String username, String password) throws SQLException {
-        String sql = "INSERT INTO users(username, password) VALUES(?, ?)";
+        int userId = -1;
+    	String sql = "INSERT INTO users(username, password) VALUES(?, ?)";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, username);
             ps.setString(2, password);
 
             ps.executeUpdate();
-        }
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+		        if (keys.next()) {
+		        	userId = keys.getInt(1);
+		        }
+		    }
+            
+        } catch (SQLException e) {
+			if (e.getMessage().contains("UNIQUE constraint failed")) {
+		        System.out.println("Username '" + username + "' is already taken.");
+		    } else {
+		        System.out.println(e.getMessage());
+		    }
+		}
+        
+        // add "all" entries category if user is added
+     	if (userId != -1) {
+     		DatabaseInitializer.registerUser(conn, userId);
+     	}
     }
     
     public void deleteUser(int id) throws SQLException {
