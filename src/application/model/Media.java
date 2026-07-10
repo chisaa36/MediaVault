@@ -2,18 +2,18 @@ package application.model;
 
 public class Media {
 	
-	private int mediaId;
+	protected int mediaId;
 	private Type type;
 	private String title;
 	private String creator;
-	private String year;
+	private int year;
 	private Status status;
 	private double userRating;
 	private String review;
 	private String info;
 	
 	// constructors
-	public Media(int mediaId, Type type, String title, String creator, String year, Status status, double userRating, String review, String info) {
+	public Media(int mediaId, Type type, String title, String creator, Status status, double userRating, String review, int year, String info) {
 		this.mediaId = mediaId;
 		this.type = type;
 		this.title = title;
@@ -25,13 +25,23 @@ public class Media {
 		this.info = info;
 	}
 	
+	// new
+	public Media(String title, String creator, int year, Status status, double userRating, String review) {
+		this.title = title;
+		this.creator = creator;
+		this.year = year;
+		this.status = status;
+		this.userRating = userRating;
+		this.review = review;
+	}
+	
 	// getters and setters
 	public int getMediaId() {return mediaId;}
 	public Type getMediaType() {return type;}
 	public String getTitle() {return title;}
 	public Status getStatus() {return status;}
 	public String getCreator() {return creator;}
-	public String getYearString() {return year;}
+	public int getYear() {return year;}
 	public double getUserRating() {return userRating;}
 	public String getReview() {return review;}
 	public String getUserRatingString() { 	

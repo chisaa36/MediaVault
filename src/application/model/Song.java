@@ -7,26 +7,26 @@ public class Song extends Media{
 	private int runtimeSeconds;
 
     public Song(String title,
-    			Status status,
-    			double userRating,
-    			String album,
     			String artist,
     			int yearReleased,
-    			int runtimeSeconds,
-    			String review) {
+    			Status status,
+    			double userRating,
+    			String review,
+    			String album,    			
+    			int runtimeSeconds)
+    			 {
     	
         super(0,
               Type.SONG,
               title,
               artist,
-              "",
               status,
               userRating,
               review,
+              yearReleased,
               "");      		// info = album
     	
     	this.album = album;
-        this.yearReleased = yearReleased;
         this.runtimeSeconds = runtimeSeconds;
     }
     
@@ -48,4 +48,9 @@ public class Song extends Media{
     	
     	return String.valueOf(yearReleased);
     }
+
+	public void setSongId(int songId) {
+		this.mediaId = songId;
+		
+	}
 }
