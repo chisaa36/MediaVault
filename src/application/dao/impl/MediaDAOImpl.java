@@ -204,13 +204,14 @@ public abstract class MediaDAOImpl {
 				ResultSet rs = stmt.executeQuery();
 				if (rs.next()) {
 					return new Song(rs.getString("title"),
-									Status.fromDbString(rs.getString("status")),
-									rs.getDouble("user_rating"),
-									rs.getString("album"),
 									rs.getString("artist"),
 									rs.getInt("year_released"),
-									rs.getInt("runtime_seconds"),
-									rs.getString("review"));
+									Status.fromDbString(rs.getString("status")),
+									rs.getDouble("user_rating"),
+									rs.getString("review"),
+									rs.getString("album"),
+									rs.getInt("runtime_seconds")
+									);
 				}
 				else {
 					System.out.println("Song not found");

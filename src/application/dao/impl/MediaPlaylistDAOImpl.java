@@ -10,6 +10,7 @@ import java.util.List;
 
 import application.model.Type;
 import application.model.Media;
+import application.model.MediaPlaylist;
 import application.model.Song;
 import application.model.Game;
 import application.model.Show;
@@ -25,7 +26,7 @@ public class MediaPlaylistDAOImpl {
 		this.userId = userId;
 	}
 	
-	public boolean createPlaylist(String name, int userId, Type type) throws SQLException {
+	public boolean createPlaylist(String name, Type type) throws SQLException {
 		
 		boolean answer = true;
 		
@@ -110,23 +111,20 @@ public class MediaPlaylistDAOImpl {
 		}
 	}
 	
-	public List<? extends Media> getMediasInPlaylist(int playlistId, Type type) throws SQLException {
+	public List<Media> getMediasInPlaylist(int playlistId, String mediaType) throws SQLException {
 		
-		List<Song> songItems = new ArrayList<Song>();
-		//List<Game> gameItems = new ArrayList<Game>();
-		//List<Show> showItems = new ArrayList<Show>();
+		String table = mediaType.toLowerCase();
+		List<Media> mediaItems = new ArrayList<Media>();
 		
-		if(type == Type.SONG)
-		{
-			String sql = """
-				SELECT s.id, s.title, spi.status, spi.user_rating, s.album, s.artist, s.year_released, s.runtime_seconds, spi.review
-				FROM songs_playlists sp
-				JOIN songs_playlist_items spi
-				ON sp.id = spi.playlist_id
-				JOIN songs s
-				ON spi.songs_id = s.id
-				WHERE sp.user_id = ? AND sp.id = ?
-				""";
+		String sql = "SELECT m.id, m.title, m.creator, m.year, mr.status, mr.user_rating, mr.review "
+	            + "FROM " + table + "s_playlists mp "
+	            + "JOIN " + table + "s_playlist_items mpi "
+	            + "ON mp.id = mpi.playlist_id "
+	            + "JOIN " + table + "s m "
+	            + "ON mpi." + table + "_id = m.id "
+	            + "JOIN " + table + "s_reviews mr "
+	            + "ON m.id = mr." + table + "_id AND mr.user_id = mp.user_id "
+	            + "WHERE mp.user_id = ? AND mp.id = ?";
 			
 			try (PreparedStatement stmt = conn.prepareStatement(sql)){
 				stmt.setInt(1, userId);
@@ -146,93 +144,159 @@ public class MediaPlaylistDAOImpl {
 				        review = "";
 				    }
 				    
-					Song song = new Song(rs.getString("title"),
-										 status,
-										 rs.getDouble("user_rating"),
-										 rs.getString("album"),
-										 rs.getString("artist"),
-										 rs.getInt("year_released"),
-										 rs.getInt("runtime_seconds"),
-										 rs.getString("review"));
-					
-					songItems.add(song);
+				    String title = rs.getString("title");
+				    String creator = rs.getString("creator");
+				    int year = rs.getInt("year");
+				    double user_rating = rs.getDouble("user_rating");
+				    
+				    switch(mediaType) {
+				    	case "song":
+				    		sql = """
+				    			SELECT album, runtime_seconds FROM songs
+				    			WHERE title = ? AND creator = ?
+				    			""";
+				    		
+				    		try (PreparedStatement pstmt = conn.prepareStatement(sql)){
+				    			pstmt.setString(1, title);
+				    			pstmt.setString(2, creator);
+								
+								rs = pstmt.executeQuery();
+								if (rs.next()) {
+									Song media = new Song(title,
+											  creator,
+											  year,
+											  status,
+											  user_rating,
+											  review,
+											  rs.getString("album"),
+											  rs.getInt("runtime_seconds"));
+									
+									mediaItems.add(media);
+								}
+								
+				    		}
+				    		break;
+				    	case "game":
+				    		sql = """
+				    			SELECT avg_playtime_mins FROM games
+				    			WHERE title = ? AND creator = ?
+				    			""";
+				    		
+				    		try (PreparedStatement pstmt = conn.prepareStatement(sql)){
+				    			pstmt.setString(1, title);
+				    			pstmt.setString(2, creator);
+								
+								rs = pstmt.executeQuery();
+								
+								if (rs.next()) {
+									Game media = new Game(title,
+											  creator,
+											  year,
+											  status,
+											  user_rating,
+											  review,
+											  rs.getInt("avg_playtime_mins"));
+									mediaItems.add(media);
+								}
+				    		}
+				    		break;
+			    		
+				    	case "show":
+				    		break;
+				    }
+				}
+			}
+		
+		return mediaItems;
+	}
+	
+	public List<MediaPlaylist> getPlaylistsByUser(int userId, String mediaType) throws SQLException {
+		List<MediaPlaylist> playlists = new ArrayList<>();
+		
+		String sql = "SELECT id, title FROM songs_playlists WHERE user_id = ?";
+		
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setInt(1, userId);
+			
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				int playlistId = rs.getInt("id");
+				List<Media> items = getMediasInPlaylist(playlistId, mediaType);
+				
+				MediaPlaylist playlist = new MediaPlaylist(rs.getString("title"), items, playlistId);
+				
+				playlists.add(playlist);
+			}
+		}
+		
+		return playlists;
+	}
+	
+	public void deletePlaylist(int playlistId, String mediaType) throws SQLException {
+		
+		String sql = "DELETE FROM " + mediaType + "s_playlist_items WHERE playlist_id = ?";
+			
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setInt(1, playlistId);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+			
+		sql = "DELETE FROM " + mediaType + "s_playlists WHERE id = ?";
+		try (PreparedStatement stmt = conn.prepareStatement(sql)){
+			stmt.setInt(1, playlistId);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+	}
+	
+	public int countStatusedMedia(int playlistId, Status status, String mediaType) throws SQLException {
+	    
+		String media = mediaType.toLowerCase();
+		
+		String sql = "SELECT COUNT(*) FROM " + media + "s_reviews mr "
+				   + "JOIN " + media + "s_playlist_items mpi ON mr." + media + "_id = mpi." + media +"_id "
+				   + "WHERE mpi.playlist_id = ? AND mr.user_id = ? AND LOWER(REPLACE(mr.status, '_', ' ')) = LOWER(?)";
+	
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.setInt(1, playlistId);
+			stmt.setInt(2, userId);
+		    stmt.setString(3, status.toDbString());
+	
+		    try (ResultSet rs = stmt.executeQuery()) {
+		    	return rs.next() ? rs.getInt(1) : 0;
+		    }
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return 0;
+
+	}
+	
+	public double calculateAvgRating(int playlistId, String mediaType) throws SQLException {
+		
+		String media = mediaType.toLowerCase();
+		
+		String sql = "SELECT COUNT(*) FROM " + media + "s_reviews mr "
+				   + "JOIN " + media + "s_playlist_items mpi ON mr." + media + "_id = mpi." + media +"_id "
+				   + "WHERE mpi.playlist_id = ? AND mr.user_id = ? AND LOWER(REPLACE(mr.status, '_', ' ')) = LOWER(?)";
+			
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+			stmt.setInt(1, playlistId);
+			stmt.setString(2, Status.COMPLETED.toDbString());
+			    
+	
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getDouble(1);
 				}
 			}
 		}
-		
-		return songItems;
-	}
-	
-	public void deletePlaylist(int playlistId, Type type) throws SQLException {
-		
-		if(type == Type.SONG)
-		{
-			String sql = "DELETE FROM songs_playlist_items WHERE playlist_id = ?";
-			
-			try (PreparedStatement stmt = conn.prepareStatement(sql)){
-				stmt.setInt(1, playlistId);
-				stmt.executeUpdate();
-			} catch (SQLException e) {
-				System.out.println(e.getMessage());
-			}
-			
-			sql = "DELETE FROM songs_playlists WHERE id = ?";
-			try (PreparedStatement stmt = conn.prepareStatement(sql)){
-				stmt.setInt(1, playlistId);
-				stmt.executeUpdate();
-			} catch (SQLException e) {
-				System.out.println(e.getMessage());
-			}
-		}
-	}
-	
-	public int countStatusedSongs(int playlistId, Status status, Type type) throws SQLException {
-	    
-		if(type == Type.SONG)
-		{
-			String sql = """
-		        SELECT COUNT(*)
-		        FROM songs_playlist_items
-		        WHERE playlist_id = ?
-		          AND LOWER(REPLACE(status, '_', ' ')) = LOWER(?)
-		    """;
-	
-		    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-		        stmt.setInt(1, playlistId);
-		        stmt.setString(2, status.toDbString());
-	
-		        try (ResultSet rs = stmt.executeQuery()) {
-		            return rs.next() ? rs.getInt(1) : 0;
-		        }
-		    }
-		}
-		
-		return -1;
-	}
-	
-	public double calculateAvgRating(int playlistId, Type type) throws SQLException {
-		
-		if(type == Type.SONG)
-		{
-			String sql = """
-			        SELECT AVG(user_rating)
-			        FROM songs_playlist_items
-			        WHERE playlist_id = ?
-			          AND LOWER(REPLACE(status, '_', ' ')) = LOWER(?)
-			          AND user_rating > 0
-			    """;
-			
-			try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-			    stmt.setInt(1, playlistId);
-			    stmt.setString(2, Status.COMPLETED.toDbString());
-			    
-	
-			    try (ResultSet rs = stmt.executeQuery()) {
-			        if (rs.next()) {
-			            return rs.getDouble(1);
-			        }
-			    }
-			}
+		catch (SQLException e) {
+			e.printStackTrace();
 		}
 
 		return 0.0;
@@ -240,6 +304,7 @@ public class MediaPlaylistDAOImpl {
 	
 	public void updateAllPlaylists(Media media) throws SQLException {
 		
+		System.out.println("@@@ UPDATINGG");
 		String mediaType = null;
 		
 		if (media instanceof Song) {
@@ -252,18 +317,34 @@ public class MediaPlaylistDAOImpl {
 			mediaType = "show";
 		}
 		
-		String sql = "UPDATE" + mediaType + "s_playlist_items " + 
-    			"SET status = ?, user_rating = ? WHERE " + mediaType + "s_id IN (SELECT id FROM " + mediaType + "s " +
-    			"WHERE title = ? AND artist = ?) AND playlist_id IN (SELECT id FROM " + mediaType + "s_playlists " +
-    			"WHERE user_id = ?";
+		// make use of review table
+		// basically update the reviews of a media
+		String sql = "UPDATE " + mediaType + "s_reviews " + 
+    			"SET status = ?, user_rating = ?, review = ? " +
+				"WHERE user_id = ? AND " + mediaType + "_id = " +
+					"(SELECT id FROM " + mediaType + "s " +
+					"WHERE title = ? AND creator = ?)";
 	    
 	    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 	        stmt.setString(1, media.getStatus().toDbString());
 	        stmt.setDouble(2, media.getUserRating());
 	        stmt.setString(3, media.getReview());
-	        stmt.setString(4, media.getTitle());
-	        stmt.setString(5, media.getCreator());
-	        stmt.setInt(6, userId);
+	        stmt.setInt(4, userId);
+	        stmt.setString(5, media.getTitle());
+	        stmt.setString(6, media.getCreator());
+
+	        stmt.executeUpdate();
+	    }
+	}
+
+	public void addMediaToPlaylist(int playlistId, int mediaId, String mediaType) throws SQLException {
+
+		String sql = "INSERT INTO " + mediaType.toLowerCase() + "s_playlist_items (playlist_id, " + mediaType.toLowerCase() + ") "
+				   + "VALUES (?, ?)";
+		
+		try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+	        stmt.setInt(1, playlistId);
+	        stmt.setInt(2, mediaId);
 
 	        stmt.executeUpdate();
 	    }
