@@ -52,6 +52,18 @@ public class DatabaseInitializer {
 				last_year_aired INTEGER
 			)""");
 			
+			// create medias table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS medias (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					type TEXT,
+					title TEXT NOT NULL UNIQUE,
+					creator TEXT,
+					year TEXT,
+					info TEXT,
+					UNIQUE(title, creator)
+			)""");
+			
 			// create seasons table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS seasons (
@@ -106,6 +118,15 @@ public class DatabaseInitializer {
 				FOREIGN KEY (user_id) REFERENCES users(id)
 			)""");
 			
+			// create medias_playlists table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS medias_playlists (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
+				title TEXT NOT NULL,
+				UNIQUE (user_id, title),
+			)""");
+			
 			// create games_playlist_items table
 			stmt.execute("""
 				CREATE TABLE IF NOT EXISTS games_playlist_items (
@@ -126,10 +147,10 @@ public class DatabaseInitializer {
 			    user_rating REAL,
 			    review TEXT,
 				
-				UNIQUE(playlist_id, songs_id),
+				UNIQUE(playlist_id, song_id),
 				
 				FOREIGN KEY (playlist_id) REFERENCES songs_playlists(id),
-				FOREIGN KEY (songs_id) REFERENCES songs(id)
+				FOREIGN KEY (song_id) REFERENCES songs(id)
  			)""");
 			
 			// create shows_playlist_items table
@@ -137,6 +158,23 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS shows_playlist_items (
 				playlist_id INTEGER NOT NULL,
 				show_id INTEGER NOT NULL,
+				
+				PRIMARY KEY (playlist_id, show_id),
+				FOREIGN KEY (playlist_id) REFERENCES shows_playlists(id),
+				FOREIGN KEY (show_id) REFERENCES shows(id)
+			)""");
+			
+			// create medias_playlist_items table
+			stmt.execute("""
+				CREATE TABLE IF NOT EXISTS shows_playlist_items (
+				type TEXT,
+				playlist_id INTEGER NOT NULL,
+			    media_id INTEGER NOT NULL,
+			    status TEXT,
+			    user_rating REAL,
+			    review TEXT,
+				
+				UNIQUE(playlist_id, song_id),
 				
 				PRIMARY KEY (playlist_id, show_id),
 				FOREIGN KEY (playlist_id) REFERENCES shows_playlists(id),

@@ -1,28 +1,28 @@
 package application.model;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-public class SongPlaylist extends MediaPlaylist{
+public class MediaPlaylist {
 	
 	private int playlistId;
 	public String title;
-	public List<Song> songs = new ArrayList<>();
+	public List<Media> medias = new ArrayList<>();
 	
 	// constructor
-	public SongPlaylist(String title, List<Song> songs, int playlistId) {
+	public MediaPlaylist(String title, List<Media> medias, int playlistId) {
 		super();
 		this.title = title;
-		this.songs = songs;
+		this.medias = medias;
 		this.playlistId = playlistId;
 	}
 	
 	// getters and setters
 	public String getTitle() {return title;}
-	public List<Song> getSongs() {return songs;}
+	public List<Media> getMedias() {return medias;}
 	public int getPlaylistId() {return playlistId;}
 	
 	public void setTitle(String title) {this.title = title;}
-	public void setSongs(List<Song> songs) {this.songs = songs;}
+	public void setMedias(List<Media> medias) {this.medias = medias;}
 	public void setPlaylistId(int playlistId) {this.playlistId = playlistId;}
 }
