@@ -96,7 +96,7 @@ public class SpotifyClient {
             double userRating = 0.0;
             String review = "";
 
-            songs.add(new Song(title, status, userRating, album, artist, yearReleased, runtimeSeconds, review));
+            songs.add(new Song(title, artist, yearReleased, status, userRating, review, album, runtimeSeconds));
         }
         
         return songs;
