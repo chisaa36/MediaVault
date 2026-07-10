@@ -24,7 +24,8 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS games (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT NOT NULL UNIQUE,
-				developer TEXT,
+				creator TEXT,
+				year INTEGER,
 				avg_playtime_mins INTEGER
 			)""");
 			
@@ -34,10 +35,10 @@ public class DatabaseInitializer {
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT NOT NULL,
 				album TEXT,
-				artist TEXT,
-				year_released INTEGER,
+				creator TEXT,
+				year INTEGER,
 				runtime_seconds INTEGER,
-				UNIQUE(title, artist)
+				UNIQUE(title, creator)
 			)""");
 			
 			// create shows table
@@ -45,11 +46,11 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS shows (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT NOT NULL UNIQUE,
+				creator TEXT,
+				year INTEGER,
 				num_of_seasons INTEGER,
 				num_of_episodes INTEGER,
-				avg_mins_per_ep INTEGER,
-				first_year_aired INTEGER,
-				last_year_aired INTEGER
+				avg_mins_per_ep INTEGER
 			)""");
 			
 			// create medias table
@@ -124,7 +125,7 @@ public class DatabaseInitializer {
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				user_id INTEGER NOT NULL,
 				title TEXT NOT NULL,
-				UNIQUE (user_id, title),
+				UNIQUE (user_id, title)
 			)""");
 			
 			// create games_playlist_items table
@@ -292,6 +293,7 @@ public class DatabaseInitializer {
 			
 			System.out.println("Tables initialized.");
 		} catch (SQLException e) {
+			e.printStackTrace();
 			System.out.println(e.getMessage());
 		}
 	}
@@ -299,7 +301,6 @@ public class DatabaseInitializer {
 	
 	public static int registerUser(Connection conn, int userId) throws SQLException {
 		// add "all" entries category if user is added
-		System.out.println("ADDINGGGGGGGG");
 		String sql = "INSERT OR IGNORE INTO games_playlists (user_id, title) VALUES (?, ?)";
 		try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setInt(1, userId);
