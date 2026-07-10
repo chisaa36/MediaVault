@@ -1,6 +1,7 @@
 package application.model;
 
 public enum Status {
+	UNKNOWN,
 	PLANNED,
 	IN_PROGRESS,
 	COMPLETED;
@@ -24,14 +25,14 @@ public enum Status {
         
         switch (value.toLowerCase()) {
             case "planned":     
-            	return PLANNED;
+            		return PLANNED;
             case "in progress": 
             	return IN_PROGRESS;
             case "completed":   
-            	return COMPLETED;
+            		return COMPLETED;
             default: 
-            	System.out.println("Unknown status: " + value);
-            	return null;
+            		System.out.println("Unknown status: " + value);
+            		return UNKNOWN;
         }
     }
 }
