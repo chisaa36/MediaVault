@@ -6,12 +6,11 @@ import java.util.List;
 public class MediaPlaylist {
 	
 	private int playlistId;
-	public String title;
-	public List<Media> medias = new ArrayList<>();
+	private String title;
+	private List<? extends Media> medias = new ArrayList<>();
 	
 	// constructor
-	public MediaPlaylist(String title, List<Media> medias, int playlistId) {
-		super();
+	public MediaPlaylist(String title, List<? extends Media> medias, int playlistId) {
 		this.title = title;
 		this.medias = medias;
 		this.playlistId = playlistId;
@@ -19,7 +18,7 @@ public class MediaPlaylist {
 	
 	// getters and setters
 	public String getTitle() {return title;}
-	public List<Media> getMedias() {return medias;}
+	public List<? extends Media> getMedias() {return medias;}
 	public int getPlaylistId() {return playlistId;}
 	
 	public void setTitle(String title) {this.title = title;}

@@ -26,6 +26,7 @@ public class DatabaseInitializer {
 				title TEXT NOT NULL UNIQUE,
 				creator TEXT,
 				year INTEGER,
+				genre TEXT,
 				avg_playtime_mins INTEGER
 			)""");
 			
@@ -46,11 +47,14 @@ public class DatabaseInitializer {
 				CREATE TABLE IF NOT EXISTS shows (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				title TEXT NOT NULL UNIQUE,
+				genre TEXT,
 				creator TEXT,
-				year INTEGER,
+				year_start INTEGER,
+				year_end INTEGER,
 				num_of_seasons INTEGER,
 				num_of_episodes INTEGER,
-				avg_mins_per_ep INTEGER
+				avg_mins_per_ep INTEGER,
+				airing BOOLEAN
 			)""");
 			
 			// create medias table

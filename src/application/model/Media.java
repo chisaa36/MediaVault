@@ -11,14 +11,14 @@ public class Media {
 	private double userRating;
 	private String review;
 	private String info;
+	private String yearString;
 	
 	// constructors
-	public Media(int mediaId, Type type, String title, String creator, Status status, double userRating, String review, int year, String info) {
+	public Media(int mediaId, Type type, String title, String creator, Status status, double userRating, String review, String info) {
 		this.mediaId = mediaId;
 		this.type = type;
 		this.title = title;
 		this.creator = creator;
-		this.year = year;
 		this.status = status;
 		this.userRating = userRating;
 		this.review = review;
@@ -64,6 +64,9 @@ public class Media {
 	public String getMediaInfo() {
 		return info;
 	}
+	public String getYearString() {
+		return yearString;
+	}
 	
 	public void setMediaId(int mediaId) {this.mediaId = mediaId;}
 	public void setMediaType(Type type) {this.type = type;}
@@ -72,4 +75,12 @@ public class Media {
 	public void setCreator(String creator) {this.creator = creator;}
 	public void setUserRating(double userRating) {this.userRating = userRating;}
 	public void setReview(String review) {this.review = review;}
+	
+    protected void setMediaInfo(String info) {
+        this.info = info;
+    }
+
+    protected void setYearString(String yearString) {
+        this.yearString = yearString;
+    }
 }

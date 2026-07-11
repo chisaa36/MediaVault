@@ -59,11 +59,7 @@ public class SpotifyClient {
 
         String url = "https://api.spotify.com/v1/search?q=" + encodedQuery + "&type=track&limit=10";
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Authorization", "Bearer " + accessToken)
-                .GET()
-                .build();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("Authorization", "Bearer " + accessToken).GET().build();
         
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -74,7 +70,8 @@ public class SpotifyClient {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(json);
 
-        if (!root.has("tracks")) {
+        if (!root.has("tracks"))
+        {
             System.out.println("Spotify did not return any tracks.");
             return songs;
         }
@@ -96,7 +93,7 @@ public class SpotifyClient {
             double userRating = 0.0;
             String review = "";
 
-            songs.add(new Song(title, artist, yearReleased, status, userRating, review, album, runtimeSeconds));
+            songs.add(new Song(title, status, userRating, album, artist, yearReleased, runtimeSeconds, review));
         }
         
         return songs;

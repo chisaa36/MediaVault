@@ -7,13 +7,13 @@ public class Song extends Media{
 	private int runtimeSeconds;
 
     public Song(String title,
-    			String artist,
-    			int yearReleased,
     			Status status,
     			double userRating,
-    			String review,
-    			String album,    			
-    			int runtimeSeconds)
+    			String album,
+    			String artist,
+    			int yearReleased,
+    			int runtimeSeconds,
+    			String review)
     			 {
     	
         super(0,
@@ -23,11 +23,14 @@ public class Song extends Media{
               status,
               userRating,
               review,
-              yearReleased,
-              "");      		// info = album
+              "");
     	
+        this.yearReleased = yearReleased;
     	this.album = album;
         this.runtimeSeconds = runtimeSeconds;
+        
+        updateMediaInfo();
+        updateYearString(String.valueOf(yearReleased));
     }
     
     // getters
@@ -40,17 +43,29 @@ public class Song extends Media{
 
         return String.format("%d:%02d", minutes, seconds);
     }
-    public String setInfo() {
-    	
-    	return "from album\"" + album + "\" of duration " + this.getRuntimeString();
-    }
-    public String setYearString() {
-    	
-    	return String.valueOf(yearReleased);
-    }
 
 	public void setSongId(int songId) {
 		this.mediaId = songId;
 		
+	}
+	
+	private void updateMediaInfo() {
+        setMediaInfo("from album \"" + fitToSpace(album, 18)  + "\" of duration " + getRuntimeString());
+    }
+	
+	private void updateYearString(String yearString) {
+		setYearString(yearString);
+	}
+	
+	private static String fitToSpace(String text, int width) {
+	    if (text == null) {
+	        return "";
+	    }
+
+	    if (text.length() <= width) {
+	        return text;
+	    }
+
+	    return text.substring(0, width - 3) + "...";
 	}
 }

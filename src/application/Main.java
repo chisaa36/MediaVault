@@ -6,12 +6,14 @@ import application.api.SpotifyClient;
 import application.model.Media;
 import application.model.MediaPlaylist;
 import application.model.Song;
+import application.model.Game;
+import application.model.Show;
 import application.model.Status;
 import application.model.Type;
 import application.dao.impl.MediaPlaylistDAOImpl;
 import application.db.DatabaseConnection;
 import application.db.DatabaseInitializer;
-import application.dao.MediaDAO;
+import application.dao.impl.MediaDAOImpl;
 import application.dao.UserDAO;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -24,7 +26,7 @@ public class Main {
 	private static Scanner scanner = new Scanner(System.in);
 	private static Connection conn;
 	private static UserDAO userDAO;
-	private static MediaDAO mediaDAO;
+	private static MediaDAOImpl mediaDAO;
 	private static MediaPlaylistDAOImpl mediaPlaylistDAO;
 	private static SpotifyClient spotifyClient = new SpotifyClient("266e17b3bb8e432d82b803598192fc5f", "f38ada98c91f4bf9bf6ed4f4490d7b12");
 	
@@ -161,35 +163,47 @@ public class Main {
 	
 	public static void vaultMenu(){
 		
+		List<Media> combined = new ArrayList<>();
+		
+		List<Song> songList = new ArrayList<>();
+		List<Game> gameList = new ArrayList<>();
+		List<Show> showList = new ArrayList<>();
+		mediaDAO = new MediaDAOImpl(conn, loggedInUser);
+		boolean isAllMedias = true;
+				
 		String choice;
 		    
 	    do
 	    {
 	    	System.out.println("* * * * * * * * * * * MEDIA VAULT * * * * * * * * * * *");
 	    	System.out.println("* - - - - - - - - - - Vault  Menu - - - - - - - - - - *");
-		    System.out.println("* [1] Settings");
-		    System.out.println("* [2] Song Vault");
-		    System.out.println("* [3] Game Vault");
-		    System.out.println("* [4] Show Vault");
+		    System.out.println("* [1] Song Vault");
+		    System.out.println("* [2] Game Vault");
+		    System.out.println("* [3] Show Vault");
+		    System.out.println("* [*] View All Media");
 		    System.out.println("* [<] Back to Login Menu");
 		    System.out.print("*\n* Enter your choice: ");
 		    choice = scanner.nextLine();
 	    	
+		    /*
 		    if(choice.equals("1"))
 		    {
 		    	runUserSettings();
 		    }
-		    else if(choice.equals("2"))
+		    else
+		    */
+		    
+		    if(choice.equals("1"))
 		    {
 		    	System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
 		    	getMediaVault("Song");
 		    }
-		    else if(choice.equals("3"))
+		    else if(choice.equals("2"))
 		    {
 		    	System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
 		    	getMediaVault("Game");
 		    }
-		    else if(choice.equals("4"))
+		    else if(choice.equals("3"))
 		    {
 		    	System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
 		    	getMediaVault("Show");
@@ -197,6 +211,25 @@ public class Main {
 		    else if(choice.equals("<"))
 		    {
 		    	System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
+		    }
+		    else if(choice.equals("*"))
+		    {
+		    	System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+		    	
+		    	try {
+			    	songList = mediaDAO.getSongsByUser();
+			    	gameList = mediaDAO.getGamesByUser();
+			    	showList = mediaDAO.getShowsByUser();
+			    	
+			    	combined.addAll(songList);
+			    	combined.addAll(gameList);
+			    	combined.addAll(showList);
+			    	
+			    	printMedia(combined, isAllMedias);
+		    	}
+		    	catch(SQLException e) {
+		    		System.out.println(" Error in loading medias.");
+		    	}
 		    }
 		    else
 		    {
@@ -207,6 +240,7 @@ public class Main {
 	    } while(!choice.equals("<"));
 	}
 	
+	/*
 	public static void runUserSettings(){
 		
 		System.out.println("* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
@@ -215,16 +249,17 @@ public class Main {
     	System.out.println("= [2] Change Username");
     	System.out.println("= [3] Delete User Profile");
 	}
+	*/
 	
 	public static void getMediaVault(String mediaType){
 		
 		int playlistChoice = -1, triggerValue = 0, playlistId = -1;
 		String choice, choice2, choice7, title;
 		
-		mediaDAO = new MediaDAO(conn, loggedInUser);
+		mediaDAO = new MediaDAOImpl(conn, loggedInUser);
 		mediaPlaylistDAO = new MediaPlaylistDAOImpl(conn, loggedInUser);
 		
-		List<Media> mediaList = new ArrayList<>();
+		//List<Media> mediaList = new ArrayList<>();
 		List<MediaPlaylist> playlists = new ArrayList<>();
 		
 		spotifyClient = new SpotifyClient("266e17b3bb8e432d82b803598192fc5f", "f38ada98c91f4bf9bf6ed4f4490d7b12");
@@ -240,16 +275,16 @@ public class Main {
 		    choice = scanner.nextLine();
 		    
 		    if(choice.equals("1"))
-		    {
+		    {	
 		    	do
 		    	{
-			    	System.out.printf("= - - - - - - - - - =  MY  %s  = - - - - - - - - - =\n", mediaType.toUpperCase());
+			    	System.out.printf("= - - - - - - - - - =  MY  %sS  = - - - - - - - - - =\n", mediaType.toUpperCase());
 			    	System.out.println("= [1] Completed");
 			    	System.out.println("= [2] In Progress");
 			    	System.out.println("= [3] Planned");
 			    	System.out.printf("= [*] View All My %ss\n", mediaType);
 			    	System.out.printf("= [+] Add %s\n", mediaType);
-			    	System.out.printf("= [<] Back to %s Vault", mediaType);
+			    	System.out.printf("= [<] Back to %s Vault\n", mediaType);
 			    	System.out.print("=\n= Enter your choice: ");
 				    choice2 = scanner.nextLine();
 				    
@@ -289,7 +324,7 @@ public class Main {
 				    {
 				    	System.out.println("= = = = = = = = = = = = = = = = = = = = = = = = = = = =\n");
 				    	
-				    	doSongSearch(playlistId, triggerValue);
+				    	doMediaSearch(playlistId, triggerValue, mediaType);
 				    }
 				    else if(choice2.equals("<"))
 				    {
@@ -309,11 +344,22 @@ public class Main {
 		    		
 			    	do
 			    	{	
-			    			playlists = mediaPlaylistDAO.getPlaylistsByUser(loggedInUser, "Song");
+			    			if(mediaType.equalsIgnoreCase("song"))
+			    			{
+			    				playlists = mediaPlaylistDAO.getPlaylistsByUser(loggedInUser, "Song");
+			    			}
+			    			else if(mediaType.equalsIgnoreCase("game"))
+			    			{
+			    				playlists = mediaPlaylistDAO.getPlaylistsByUser(loggedInUser, "Game");
+			    			}
+			    			else if(mediaType.equalsIgnoreCase("show"))
+			    			{
+			    				playlists = mediaPlaylistDAO.getPlaylistsByUser(loggedInUser, "Show");
+			    			}
 			    			
 			    			System.out.println();
 				            System.out.println("-------------------------------------------------------------------------------------------------------------------");
-				            System.out.printf("| %-3s | %-23s | %-11s | %-9s | %-11s | %-7s | %-29s |%n", "No.", "Title", "Total Songs", "Completed", "In Progress", "Planned", "Avg. Rating (Completed Songs)");
+				            System.out.printf("| %-3s | %-23s | %-11s | %-9s | %-11s | %-7s | %-29s |%n", "No.", "Title", "Total " + mediaType + "s", "Completed", "In Progress", "Planned", "Avg. Rating (Completed " + mediaType + "s)");
 				            System.out.println("-------------------------------------------------------------------------------------------------------------------");
 			    			
 				            int ctr2 = 1;
@@ -327,10 +373,23 @@ public class Main {
 			    				String ratingTemp = String.valueOf(mediaPlaylistDAO.calculateAvgRating(mp.getPlaylistId(), mediaType));
 			    				
 			    				if(completeTemp == 0)
-			    					ratingTemp = "/-no completed songs yet-/";
+			    					ratingTemp = "/-no completed " + mediaType.toLowerCase() + " yet-/";
 			    				
-			    				if(mp.getTitle().equals("all_songs"))
-			    					mp.setTitle("All Songs");
+			    				if(mediaType.equalsIgnoreCase("song"))
+			    				{
+			    					if(mp.getTitle().equals("all_songs"))
+			    						mp.setTitle("All Songs");
+			    				}
+			    				else if(mediaType.equalsIgnoreCase("game"))
+			    				{
+			    					if(mp.getTitle().equals("all_games"))
+			    						mp.setTitle("All Games");
+			    				}
+			    				else if(mediaType.equalsIgnoreCase("show"))
+			    				{
+			    					if(mp.getTitle().equals("all_shows"))
+			    						mp.setTitle("All Shows");
+			    				}
 			    				
 			    				System.out.printf("| %-3s | %-23s | %-11s | %-9s | %-11s | %-7s | %-29s |%n", ctr2++,
 			    																	   fitToSpace(mp.getTitle(), 23),
@@ -345,8 +404,8 @@ public class Main {
 			    		
 					    System.out.println("= - - - - - - - - =  MY  PLAYLISTS  = - - - - - - - - =");
 					    System.out.println("= [#] View/Update Playlist (Input the Playlist No.)");
-					    System.out.println("= [+] Add a Song Playlist");
-				    	System.out.println("= [<] Back to Song Vault");
+					    System.out.println("= [+] Add a " + mediaType + " Playlist");
+				    	System.out.println("= [<] Back to " + mediaType + " Vault");
 				    	System.out.print("=\n= Enter your choice: ");
 				    	choice7 = scanner.nextLine();
 				    	
@@ -362,7 +421,7 @@ public class Main {
 				    		title = scanner.nextLine();
 				    		
 				    		try {
-					    		if(mediaPlaylistDAO.createPlaylist(title, Type.SONG))
+					    		if(mediaPlaylistDAO.createPlaylist(title, mediaType))
 					    		{
 						    		System.out.println(" - ");
 						    		System.out.println(" - " + title + " successfully added!");
@@ -382,8 +441,8 @@ public class Main {
 						
 						        if (1 <= playlistChoice && playlistChoice <= playlists.size()) {
 									// List<Songs> 
-								    MediaPlaylist mp = playlists.get(playlistChoice - 1);
-								    mediaList = mediaPlaylistDAO.getMediasInPlaylist(mp.getPlaylistId(), mediaType);
+								    //MediaPlaylist mp = playlists.get(playlistChoice - 1);
+								    //mediaList = mediaPlaylistDAO.getMediasInPlaylist(mp.getPlaylistId(), mediaType);
 						
 						            updateMedia(playlistChoice, playlists, 5, mediaType);
 									//updateMedia(loggedInUser, songDAO, sp, songPlaylistDAO, playlists, playlistChoice, scanner, 5, spotifyClient);
@@ -431,19 +490,40 @@ public class Main {
 	    return text.substring(0, width - 3) + "...";
 	}
 	
-	public static void printMedia(List<Media> mediaList) {
-
+	public static void printMedia(List<? extends Media> mediaList, boolean isAllMedias) {
+		
+		String mediaType = "";
+		
 	    System.out.println();
-        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------");
-        System.out.printf("| %-25s | %-20s | %-6s | %-10s | %-10s | %-30s |%n", "Title", "Creator", "Year", "Status", "Rating", "Review");
-        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------");
-
+	    if(isAllMedias)
+	    	System.out.print("-------");
+        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+        if(isAllMedias)
+	    	System.out.printf("| %-4s ", "Type");
+        System.out.printf("| %-3s | %-25s | %-20s | %-11s | %-11s | %-20s | %-22s | %-50s |%n", "No.", "Title", "Creator", "Year", "Status", "Rating", "Reviewed By User", "Info");
+        if(isAllMedias)
+	    	System.out.print("-------");
+        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 	    int ctr = 1;
 
 	    for (Media media: mediaList)
-	    	System.out.printf("| %-25s | %-20s | %-6s | %-10s | %-10s | %-30s |%n", ctr++, fitToSpace(media.getTitle(), 25), fitToSpace(media.getCreator(), 20), media.getStatus().toDbString(), media.getUserRatingString(), media.getReviewedStatus());
-
-	    System.out.println("-------------------------------------------------------------------------------------------------------------------------------------\n");
+	    {
+	    	
+	    	if (media instanceof Song)
+				mediaType = "SONG";
+			else if (media instanceof Game)
+				mediaType = "GAME";
+			else if (media instanceof Show)
+				mediaType = "SHOW";
+	    	
+	    	if(isAllMedias)
+	    		System.out.printf("| %-4s ", mediaType);
+	    	System.out.printf("| %-3s | %-25s | %-20s | %-11s | %-11s | %-20s | %-22s | %-50s |%n", ctr++, fitToSpace(media.getTitle(), 25), fitToSpace(media.getCreator(), 20), media.getYearString(), media.getStatus().toDbString(), media.getUserRatingString(), media.getReviewedStatus(), fitToSpace(media.getMediaInfo(), 50));	    
+	    }
+	    
+	    if(isAllMedias)
+	    	System.out.print("-------");
+	    System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
 	}
 	
 	// edit a song inside a playlist
@@ -452,9 +532,12 @@ public class Main {
 		boolean allChecker = false;
 		double rating = 0.0;
 		String choice7, choice8, choice5, choice4, choice6, review; 
-		int songChoice = 0, songState;
+		int songChoice = 0, mediaState = 0;
 		
+		Media media = null;
+		List<? extends Media> medias = new ArrayList<>();
 		List<Media> mediaList = new ArrayList<>();
+		boolean isAllMedias = false;
 		
 		// SELECT * FROM songs_playlists
 
@@ -464,7 +547,7 @@ public class Main {
 
 		    if (triggerValue == 5)
 		    	mp = playlists.get(playlistChoice - 1);
-
+		    
 		    mediaList.clear();
 
 		    allChecker = false;
@@ -476,31 +559,72 @@ public class Main {
     			
     			if(triggerValue == 1)
     			{
-					// for (Media media : MediaDAO.getMediaByUser(loggedInUser))
-					// getAllSongs(); pero completed
-		            for (Media media : mediaDAO.getMediasByUser())
-		                if (media.getStatus() == Status.COMPLETED)
-		                	mediaList.add(media);
+    				if(mediaType.equalsIgnoreCase("song"))
+    				{	
+			            for (Song song : mediaDAO.getSongsByUser())
+			                if (song.getStatus() == Status.COMPLETED)
+			                	mediaList.add(song);
+    				}
+    				else if(mediaType.equalsIgnoreCase("game"))
+    				{
+    					for (Game game : mediaDAO.getGamesByUser())
+			                if (game.getStatus() == Status.COMPLETED)
+			                	mediaList.add(game);
+    				}
+    				else if(mediaType.equalsIgnoreCase("show"))
+    				{
+    					for (Show show : mediaDAO.getShowsByUser())
+			                if (show.getStatus() == Status.COMPLETED)
+			                	mediaList.add(show);
+    				}
 		            
-		            printMedia(mediaList);
+		            printMedia(mediaList, isAllMedias);
     			}
     			else if(triggerValue == 2)
     			{
-					// getAllSongs(); pero in progress
-    				for (Media media : mediaDAO.getMediasByUser())
-		                if (media.getStatus() == Status.IN_PROGRESS)
-		                	mediaList.add(media);
+    				if(mediaType.equalsIgnoreCase("song"))
+    				{	
+			            for (Song song : mediaDAO.getSongsByUser())
+			                if (song.getStatus() == Status.IN_PROGRESS)
+			                	mediaList.add(song);
+    				}
+    				else if(mediaType.equalsIgnoreCase("game"))
+    				{
+    					for (Game game : mediaDAO.getGamesByUser())
+			                if (game.getStatus() == Status.IN_PROGRESS)
+			                	mediaList.add(game);
+    				}
+    				else if(mediaType.equalsIgnoreCase("show"))
+    				{
+    					for (Show show : mediaDAO.getShowsByUser())
+			                if (show.getStatus() == Status.IN_PROGRESS)
+			                	mediaList.add(show);
+    				}
     				
-    				printMedia(mediaList);
+    				printMedia(mediaList, isAllMedias);
     			}
     			else if(triggerValue == 3)
     			{
-					// getAllSongsByStatus(); pero planned
-    				for (Media media : mediaDAO.getMediasByUser())
-		                if (media.getStatus() == Status.PLANNED)
-		                	mediaList.add(media);
+    				if(mediaType.equalsIgnoreCase("song"))
+    				{	
+			            for (Song song : mediaDAO.getSongsByUser())
+			                if (song.getStatus() == Status.PLANNED)
+			                	mediaList.add(song);
+    				}
+    				else if(mediaType.equalsIgnoreCase("game"))
+    				{
+    					for (Game game : mediaDAO.getGamesByUser())
+			                if (game.getStatus() == Status.PLANNED)
+			                	mediaList.add(game);
+    				}
+    				else if(mediaType.equalsIgnoreCase("show"))
+    				{
+    					for (Show show : mediaDAO.getShowsByUser())
+			                if (show.getStatus() == Status.PLANNED)
+			                	mediaList.add(show);
+    				}
     				
-    				printMedia(mediaList);
+    				printMedia(mediaList, isAllMedias);
     			}
     			else if(triggerValue == 4)
     			{
@@ -508,10 +632,23 @@ public class Main {
 					// getAllSongsByUser(); pero completed
 					// all goods
 					// gawing medias
-    				for (Media media : mediaDAO.getSongsByUser(loggedInUser))
-    					mediaList.add(media);
+    				if(mediaType.equalsIgnoreCase("song"))
+    				{	
+			            for (Song song : mediaDAO.getSongsByUser())
+			                mediaList.add(song);
+    				}
+    				else if(mediaType.equalsIgnoreCase("game"))
+    				{
+    					for (Game game : mediaDAO.getGamesByUser())
+			                mediaList.add(game);
+    				}
+    				else if(mediaType.equalsIgnoreCase("show"))
+    				{
+    					for (Show show : mediaDAO.getShowsByUser())
+			                mediaList.add(show);
+    				}
     				
-    				printMedia(mediaList);
+    				printMedia(mediaList, isAllMedias);
     			}
     			else if(triggerValue == 5)
     			{
@@ -528,18 +665,28 @@ public class Main {
     				if(completeTemp == 0)
     					ratingTemp = "N/A";
     				
-    				// hmm
-    				List<Media> medias = mediaPlaylistDAO.getMediasInPlaylist(mp.getPlaylistId(), mediaType);
+    				if(mediaType.equalsIgnoreCase("song"))
+    				{
+    					medias = mediaPlaylistDAO.getSongsInPlaylist(mp.getPlaylistId());
+    				}
+    				else if(mediaType.equalsIgnoreCase("game"))
+    				{
+    					medias = mediaPlaylistDAO.getGamesInPlaylist(mp.getPlaylistId());
+    				}
+    				else if(mediaType.equalsIgnoreCase("show"))
+    				{
+    					medias = mediaPlaylistDAO.getShowsInPlaylist(mp.getPlaylistId());
+    				}
     				
-    				printMedia(medias);
+    				printMedia(medias, isAllMedias);
     		    	
     		    	System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *");
     		    	System.out.println("  * PLAYLIST TITLE: " + mp.getTitle());
     		    	System.out.println("  * - - - - - - - - - - - - - - - - - - - - - - - - - *");
-    		    	System.out.println("  * Total Songs: " + totalTemp);
-    		    	System.out.println("  * # of Completed Songs: " + completeTemp);
-    		    	System.out.println("  * # of Songs In Progress: " + inProgressTemp);
-    		    	System.out.println("  * # of Planned Songs: " + plannedTemp);
+    		    	System.out.println("  * Total " + mediaType + "s: " + totalTemp);
+    		    	System.out.println("  * # of Completed " + mediaType + "s: " + completeTemp);
+    		    	System.out.println("  * # of " + mediaType + "s In Progress: " + inProgressTemp);
+    		    	System.out.println("  * # of Planned " + mediaType + "s: " + plannedTemp);
     		    	System.out.println("  * Average Rating across Completed Entries: " + ratingTemp);
     		    	System.out.println("  * - - - - - - - - - - - - - - - - - - - - - - - - - *");
     			}
@@ -547,12 +694,12 @@ public class Main {
 	        }
 	    	catch (SQLException e) {
 	    			e.printStackTrace();
-	            System.out.println("Could not load songs.");
+	            System.out.println("Could not load " + mediaType + "s.");
 	        }
     		
     		if(triggerValue == 1)
     		{
-    			System.out.printf("= - - - - - - - - = COMPLETED %s = - - - - - - - - =\n", mediaType.toUpperCase());
+    			System.out.printf("= - - - - - - - - = COMPLETED %sS = - - - - - - - - =\n", mediaType.toUpperCase());
     		}
     		else if(triggerValue == 2)
     		{
@@ -579,7 +726,7 @@ public class Main {
     			System.out.printf("  * [#] View/Update %s Status (Input the Track No.)\n", mediaType);
     			if(!allChecker)
     			{
-	    			System.out.printf("  * [+] Add %s to Playlist", mediaType);
+	    			System.out.printf("  * [+] Add %s to Playlist\n", mediaType);
 	    			System.out.println("  * [-] Delete Playlist");
     			}
     			System.out.println("  * [<] Back to My Playlists");
@@ -603,7 +750,7 @@ public class Main {
     			else
     				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *");
     		}
-    		else if(1 <= songChoice && songChoice <= mediaList.size())
+    		else if((triggerValue != 5 && 1 <= songChoice && songChoice <= mediaList.size()) || (triggerValue == 5 && 1 <= songChoice && songChoice <= medias.size()))
     		{
     			if(triggerValue != 5)
     				System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
@@ -611,14 +758,58 @@ public class Main {
     				System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *\n");
     			
 				// all goods
-    			Media media = mediaList.get(songChoice-1);
+    			if(triggerValue != 5)
+    			{
+    				media = mediaList.get(songChoice-1);
+    			}
+    			else
+    			{
+    				media = medias.get(songChoice-1);
+    			}
+    			
     			do
     			{
 					// DO BY MEDIA TYPE
 	    			System.out.println("  * * * * * * * * * * * * * * * * * * * * * * * * * * *");
 	    			System.out.printf("  * %s %d : %s by %s\n", mediaType.toUpperCase(), songChoice, media.getTitle(), media.getCreator());
 	    			System.out.println("  * - - - - - - - - - - - - - - - - - - - - - - - - - *");
-	    			System.out.println("  * Year Released: " + String.valueOf(media.getYear()));
+	    			
+	    			if(mediaType.equalsIgnoreCase("song"))
+	    			{
+	    				Song song = (Song) media;
+	    				
+	    				System.out.println("  * Year Released: " + song.getYearReleased());
+	    				System.out.println("  * Album: " + song.getAlbum());
+	    				System.out.println("  * Runtime: " + song.getRuntimeString());
+	    				
+	    			}
+	    			else if (mediaType.equalsIgnoreCase("game"))
+	    			{
+	    			    Game game = (Game) media;
+	    			    
+	    			    System.out.println("  * Year Released: " + game.getYearReleased());
+	    			    System.out.println("  * Genre: " + game.getGenre());
+	    			    System.out.println("  * Avg. Playtime in Minutes: " + game.getAvgPlaytimeMins());
+	    			}
+	    			else if (mediaType.equalsIgnoreCase("show")) {
+	    			    Show show = (Show) media;
+	    			    
+	    			    if(show.isAiring())
+	    			    {
+	    			    	System.out.println("  * Airing Status: Currently Airing");
+	    			    	System.out.println("  * Year Started: " + show.getYearStart());
+	    			    }
+	    			    else
+	    			    {
+	    			    	System.out.println("  * Airing Status: Finished Airing");
+	    			    	System.out.println("  * Year Started: " + show.getYearStart());
+	    			    	System.out.println("  * Year Ended: " + show.getYearEnd());
+	    			    }
+
+	    			    System.out.println("  * Genre: " + show.getGenre());
+	    			    System.out.println("  * Number of Seasons: " + show.getNumOfSeasons());
+	    			}
+	    			
 	    			System.out.println("  * Status: " + media.getStatus().toDbString());
 	    			
 	    			if(media.getStatus() == Status.COMPLETED)
@@ -631,8 +822,8 @@ public class Main {
 	    			}
 	    			else if(media.getStatus() == Status.PLANNED || media.getStatus() == Status.IN_PROGRESS)
 	    			{
-	    				System.out.println("  * My Rating: /-complete to rate song-/");
-	    				System.out.println("  * My Review: /-complete to review song-/");
+	    				System.out.println("  * My Rating: /-complete to rate " + mediaType.toLowerCase() + "-/");
+	    				System.out.println("  * My Review: /-complete to review " + mediaType.toLowerCase() +"-/");
 	    			}
 	    			
 	    			System.out.println("  * - - - - - - - - - - - - - - - - - - - - - - - - - *");
@@ -648,7 +839,7 @@ public class Main {
 		    				System.out.println("  * [3] Change Review");
 	    			}
 	    			
-	    			System.out.println("  * [-] Remove Song");
+	    			System.out.println("  * [-] Remove " + mediaType.toLowerCase());
 	    			
 	    			if(triggerValue == 1)
 	    			{
@@ -660,11 +851,15 @@ public class Main {
 	    			}
 	    			else if(triggerValue == 3)
 	    			{
-	    				System.out.printf("  * [<] Back to Planned %ss", mediaType);
+	    				System.out.printf("  * [<] Back to Planned %ss\n", mediaType);
 	    			}
 	    			else if(triggerValue == 4)
 	    			{
-	    				System.out.printf("  * [<] Back to All %ss", mediaType);
+	    				System.out.printf("  * [<] Back to All %ss\n", mediaType);
+	    			}
+	    			else if(triggerValue == 5)
+	    			{
+	    				System.out.println("  * [<] Back to Playlists");
 	    			}
 	    			
 	    			System.out.println("  * ");
@@ -728,7 +923,6 @@ public class Main {
 				            			review = "";
 				            			
 				            			try {
-				            				mediaDAO.updateMediaStatus(media, Status.COMPLETED);
 					            		    
 					            		    System.out.print("  - Input Personal Rating: ");
 						            		
@@ -748,7 +942,7 @@ public class Main {
 							            	        		review = "";
 							            	        		
 								            	        	System.out.println("  - ");
-								            	        	System.out.println("  - {REVIEW SONG?}");
+								            	        	System.out.println("  - {REVIEW " + mediaType.toUpperCase() + "?}");
 								            	        	System.out.println("  - [1] Yes");
 								            	        	System.out.println("  - [2] No");
 								            	        	System.out.print("  - Enter your choice: ");
@@ -788,8 +982,10 @@ public class Main {
 						            		media.setStatus(Status.COMPLETED);
 						            		media.setUserRating(rating);
 						            		media.setReview(review);
-
+						            		
 						            		mediaDAO.updateMediaStatus(media, Status.COMPLETED);
+					            		    mediaDAO.updateMediaRating(media, rating);
+					            		    mediaDAO.updateMediaReview(media, review);
 		
 					            		    System.out.println("  - Status updated!");
 					            		    choice5 = "<";
@@ -808,7 +1004,6 @@ public class Main {
 				            			review = "";
 				            			
 				            			try {
-				            				mediaDAO.updateMediaStatus(media, Status.COMPLETED);
 					            		    
 					            		    System.out.print("  - Input Personal Rating: ");
 						            		
@@ -828,7 +1023,7 @@ public class Main {
 							            	        		review = "";
 							            	        		
 								            	        	System.out.println("  - ");
-								            	        	System.out.println("  - {REVIEW SONG?}");
+								            	        	System.out.println("  - {REVIEW " + mediaType.toUpperCase() + "?}");
 								            	        	System.out.println("  - [1] Yes");
 								            	        	System.out.println("  - [2] No");
 								            	        	System.out.print("  - Enter your choice: ");
@@ -870,6 +1065,8 @@ public class Main {
 					            		    media.setReview(review);
 					            		    
 					            		    mediaDAO.updateMediaStatus(media, Status.COMPLETED);
+					            		    mediaDAO.updateMediaRating(media, rating);
+					            		    mediaDAO.updateMediaReview(media, review);
 					            		    
 					            		    if(!choice4.equals("WRONG"))
 					            		    	System.out.println("  - Status updated!");
@@ -957,7 +1154,7 @@ public class Main {
 		    				{
 		    					choice5 = "";
 		    					
-			    				System.out.println("  - {CHANGE SONG RATING}");
+			    				System.out.println("  - {CHANGE " + mediaType.toUpperCase() + " RATING}");
 				            	System.out.print("  - Input New Rating: ");
 				            	try {
 				            		
@@ -1010,9 +1207,9 @@ public class Main {
 	    				{
 		    				try {
 			    				if(media.getReview().equals(""))
-			    					System.out.println("  - {ADD SONG REVIEW}");
+			    					System.out.println("  - {ADD "+ mediaType.toUpperCase() + " REVIEW}");
 				    			else
-				    				System.out.println("  - {CHANGE SONG REVIEW}");
+				    				System.out.println("  - {CHANGE " + mediaType.toUpperCase() + " REVIEW}");
 			    				
 				            	System.out.print("  - Input Review: ");
 				            	review = scanner.nextLine();
@@ -1048,37 +1245,60 @@ public class Main {
 	    					
 	    					if (triggerValue != 5) {
 	    						
-	    						songState = mediaDAO.deleteSong(loggedInUser, media.getTitle(), media.getCreator());
+	    						if(mediaType.equalsIgnoreCase("song"))
+	    						{
+	    							mediaState = mediaDAO.deleteSong(media.getTitle(), media.getCreator());
+	    						}
+	    						else if(mediaType.equalsIgnoreCase("game"))
+	    						{
+	    							mediaState = mediaDAO.deleteGame(media.getTitle(), media.getCreator());
+	    						}
+	    						else if(mediaType.equalsIgnoreCase("show"))
+	    						{
+	    							mediaState = mediaDAO.deleteShow(media.getTitle(), media.getCreator());
+	    						}
 	    						
-	    						if(songState == 0)
+	    						if(mediaState == 0)
 	    						{
-	    							System.out.println(" - Song not found.");
+	    							System.out.println(" - " + mediaType + " not found.");
 	    						}
-	    						else if(songState == 1)
+	    						else if(mediaState == 1)
 	    						{
-	    							System.out.println(" - " + media.getTitle() + " by " + media.getCreator() + " was removed from your songs.");
+	    							System.out.println(" - " + media.getTitle() + " by " + media.getCreator() + " was removed from your " + mediaType + "s.");
 	    						}
-	    						else if(songState == 2)
+	    						else if(mediaState == 2)
 	    						{
-	    							System.out.println(" - Song was not found in your songs.");
+	    							System.out.println(" - " + mediaType + " was not found in your " + mediaType + "s.");
 	    						}
 	    					}
 	    					else {
 								// if in all_songs, remove song everywhere
 	    					    if (allChecker){
-	    					    	songState = mediaDAO.deleteSong(loggedInUser, media.getTitle(), media.getCreator());
+	    					    	
+	    					    	if(mediaType.equalsIgnoreCase("song"))
+		    						{
+		    							mediaState = mediaDAO.deleteSong(media.getTitle(), media.getCreator());
+		    						}
+		    						else if(mediaType.equalsIgnoreCase("game"))
+		    						{
+		    							mediaState = mediaDAO.deleteGame(media.getTitle(), media.getCreator());
+		    						}
+		    						else if(mediaType.equalsIgnoreCase("show"))
+		    						{
+		    							mediaState = mediaDAO.deleteShow(media.getTitle(), media.getCreator());
+		    						}
 		    						
-		    						if(songState == 0)
+	    					    	if(mediaState == 0)
 		    						{
-		    							System.out.println(" - Song not found.");
+		    							System.out.println(" - " + mediaType + " not found.");
 		    						}
-		    						else if(songState == 1)
+		    						else if(mediaState == 1)
 		    						{
-		    							System.out.println(" - " + media.getTitle() + " by " + media.getCreator() + " was removed from your songs.");
+		    							System.out.println(" - " + media.getTitle() + " by " + media.getCreator() + " was removed from your " + mediaType + "s.");
 		    						}
-		    						else if(songState == 1)
+		    						else if(mediaState == 2)
 		    						{
-		    							System.out.println(" - Song was not found in your songs.");
+		    							System.out.println(" - " + mediaType + " was not found in your " + mediaType + "s.");
 		    						}
 	    					    }
 								// else, remove from playlist
@@ -1095,7 +1315,8 @@ public class Main {
 	    					media.setUserRating(0.0);
 	    				}
 	    				catch (SQLException e) {
-			    			System.out.println("  - Could not remove song.");
+	    					e.printStackTrace();
+			    			System.out.println("  - Could not remove " + mediaType.toLowerCase() + ".");
 		            	}
 	    				
 	    				choice8 = "<";
@@ -1123,7 +1344,7 @@ public class Main {
 
 				// basically doSongSearchAndAdd
 				// ilagay yung API sa loob ng if
-    			doSongSearch(mp.getPlaylistId(), triggerValue);
+    			doMediaSearch(mp.getPlaylistId(), triggerValue, mediaType);
     		}
 			// delete playlist
     		else if(choice7.equals("-") && triggerValue == 5 && !allChecker)
@@ -1160,46 +1381,54 @@ public class Main {
     	} while(!choice7.equals("<"));
 	}
 	
-	public static void doSongSearch(int playlistId, int triggerValue) {
+	public static void doMediaSearch(int playlistId, int triggerValue, String mediaType) {
 		
 		Status status = Status.PLANNED;
-		int songId, resultSize, songChoice = 0, yearReleased, runtimeSeconds, ctr;
-		String title, album, artist, choice2, choice3, choice4, choice5, choice6, search, review = "";
+		int resultSize = 0, songChoice = 0, ctr;
+		String choice3 = "", choice5, choice6, search, review = "";
 		double rating = 0.0;
+		boolean isSong = true;
+		List<Song> results = null;
+		
+		if(!mediaType.equalsIgnoreCase("song"))
+			isSong = false;
 		
 		try {
 	    	do
 	    	{
-	    		System.out.print(" Search Song: ");
-		        search = scanner.nextLine();
-		        
-		        List<Song> results = spotifyClient.searchTracks(search);
-	            System.out.println(" Songs found: " + results.size());
-		        
-	            System.out.println();
-	            System.out.println("-----------------------------------------------------------------");
-	            System.out.printf("| %-3s | %-23s | %-6s | %-20s |%n", "No.", "Title", "Length", "Artist");
-	            System.out.println("-----------------------------------------------------------------");
-	            
-	            resultSize = Math.min(10, results.size());
-	            
-	            for(ctr = 0; ctr < resultSize; ctr++)
-	            {
-	            	Song song = results.get(ctr);
-	            	
-	                System.out.printf("| %-3d | %-23s | %-6s | %-20s |%n", ctr+1, fitToSpace(song.getTitle(), 23), song.getRuntimeString(), fitToSpace(song.getCreator(), 20));
-	            }
-	            
-	            System.out.println("-----------------------------------------------------------------");
-	            System.out.println();
-	            System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =");
-	            System.out.println("= [#] Choose Song (Input the Track No.)");
-	            System.out.println("= [?] Change Search");
-	            System.out.println("= [+] Add Song Manually");
-	            System.out.println("= [<] Back to My Songs");
-	            System.out.print("=\n= Enter your choice: ");
+	    		if(isSong)
+	    		{
+		    		System.out.print(" Search Song: ");
+			        search = scanner.nextLine();
+			        
+			        results = spotifyClient.searchTracks(search);
+		            System.out.println(" Songs found: " + results.size());
+			        
+		            System.out.println();
+		            System.out.println("-----------------------------------------------------------------");
+		            System.out.printf("| %-3s | %-23s | %-6s | %-20s |%n", "No.", "Title", "Length", "Artist");
+		            System.out.println("-----------------------------------------------------------------");
+		            
+		            resultSize = Math.min(10, results.size());
+		            
+		            for(ctr = 0; ctr < resultSize; ctr++)
+		            {
+		            	Song song = results.get(ctr);
+		            	
+		                System.out.printf("| %-3d | %-23s | %-6s | %-20s |%n", ctr+1, fitToSpace(song.getTitle(), 23), song.getRuntimeString(), fitToSpace(song.getCreator(), 20));
+		            }
 	    		
-	            choice3 = scanner.nextLine();
+		            System.out.println("-----------------------------------------------------------------");
+		            System.out.println();
+		            System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =");
+		            
+			        System.out.println("= [#] Choose Song (Input the Track No.)");
+			        System.out.println("= [?] Change Search");
+		            System.out.println("= [+] Add Song Manually");
+		            System.out.println("= [<] Back to My Songs");
+		            System.out.print("=\n= Enter your choice: ");
+		            choice3 = scanner.nextLine();
+	    		}
 	            
 	            try {
 	            	songChoice = Integer.parseInt(choice3);
@@ -1207,149 +1436,32 @@ public class Main {
 	            catch (NumberFormatException e) {
 	            }
 	            
-	            if(choice3.equals("<"))
+	            if(choice3.equals("<") && isSong)
 	            {
 	            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =");
 	            }
-	            else if(choice3.equals("?"))
+	            else if(choice3.equals("?") && isSong)
 	            {
 	            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
 	            }
 				// manual adding
-				// TODO: Overwrite
-	            else if(choice3.equals("+"))
+	            else if(choice3.equals("+") || !isSong)
 	            {
-	            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
+	            	if(isSong)
+	            		System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
 	            	
-	            	do
-	            	{
-		            	System.out.print(" Enter Song Title: ");
-		            	title = scanner.nextLine();
-		            	System.out.print(" Enter Album Title: ");
-		            	album = scanner.nextLine();
-		            	System.out.print(" Enter Artist's Name: ");
-		            	artist = scanner.nextLine();
-		            	System.out.print(" Enter Year Released: ");
-		            	yearReleased = Integer.parseInt(scanner.nextLine());
-		            	System.out.print(" Enter Runtime in Seconds: ");
-		            	runtimeSeconds = Integer.parseInt(scanner.nextLine());
-		            	
-		            	System.out.println();
-		            	
-		            	do
-		            	{
-			            	System.out.println(" - {SONG STATUS}");
-			            	System.out.println(" - [1] Completed");
-			            	System.out.println(" - [2] In Progress");
-			            	System.out.println(" - [3] Planned");
-			            	System.out.println(" - [X] Redo Manual Add");
-			            	System.out.print(" Input Status: ");
-			            	choice4 = scanner.nextLine();
-			            	
-			            	if(choice4.equals("1"))
-			            	{
-			            		System.out.print(" Input Personal Rating: ");
-			            		
-			            		try {
-			            	        rating = Double.parseDouble(scanner.nextLine());
-	
-			            	        if (rating < 1 || rating > 10) {
-			            	        	System.out.println(" Rating must be between 1 and 10.\n");
-			            	        	choice4 = "WRONG";
-			            	        }
-			            	        else
-			            	        {
-			            	        	status = Status.COMPLETED;
-			            	        	
-			            	        	do
-			            	        	{
-			            	        		review = "";
-			            	        		
-				            	        	System.out.println(" - ");
-				            	        	System.out.println(" - {REVIEW SONG?}");
-				            	        	System.out.println(" - [1] Yes");
-				            	        	System.out.println(" - [2] No");
-				            	        	System.out.print(" - Enter your choice: ");
-				            	        	choice6 = scanner.nextLine();
-				            	        	
-				            	        	if(choice6.equals("1"))
-				            	        	{
-				            	        		System.out.println(" - ");
-				            	        		System.out.print(" - Enter Review: ");
-				            	        		review = scanner.nextLine();
-				            	        		
-				            	        		System.out.println(" - ");
-				            	        		System.out.println(" - " + title + " by " + artist + " added successfully!");
-				            	        	}
-				            	        	else if(choice6.equals("2"))
-				            	        	{
-				            	        		review = "";
-				            	        		
-				            	        		System.out.println(" - ");
-				            	        		System.out.println(" - " + title + " by " + artist + " added successfully!");
-				            	        	}
-				            	        	else
-				            	        	{
-				            	        		System.out.println(" - ");
-				            	        		System.out.println(" - Invalid input. Please try again.");
-				            	        	}
-				            	        	
-			            	        	} while(!choice6.equals("1") && !choice6.equals("2"));
-			            	        }
-			            	    }
-			            		catch (NumberFormatException e) {
-			            	        System.out.println(" Please enter a valid number.\n");
-			            	        choice4 = "WRONG";
-			            	    }
-			            	}
-			            	else if(choice4.equals("2"))
-			            	{
-			            		status = Status.IN_PROGRESS;
-			            		
-			            		System.out.println(" - ");
-            	        		System.out.println(" - " + title + " by " + artist + " added successfully!");
-			            	}
-			            	else if(choice4.equals("3"))
-			            	{
-			            		status = Status.PLANNED;
-			            		
-			            		System.out.println(" - ");
-            	        		System.out.println(" - " + title + " by " + artist + " added successfully!");
-			            	}
-			            	else if(choice4.equals("X"))
-			            	{
-			            		System.out.println();
-			            	}
-			            	else
-			            	{
-			            		System.out.println(" Invalid input! Please try again.\n");
-			            	}
-		            	} while(!choice4.equals("1") && !choice4.equals("2") && !choice4.equals("3"));
-		            	
-	            	} while(choice4.equals("X") && !choice4.equals("1") && !choice4.equals("2") && !choice4.equals("3"));
-	            	
-	            	Song song = new Song(title, artist, yearReleased, status, rating, review, album, runtimeSeconds);
-	            	
-	            	songId = mediaDAO.addMedia(song);
-	            	
-	            	if (songId != -1) {
-	            	    System.out.println(" - " + song.getTitle() + " by " + song.getCreator() + " added successfully!");
-	            	    song.setSongId(songId);
-	            	}
-	            	else {
-	            	    System.out.println(" - " + song.getTitle() + " by " + song.getCreator() + " is already in your songs!");
-	            	}
+	            	manuallyAddMedia(mediaType, playlistId, triggerValue);
 	            	
 	            	choice3 = "<";
 	            }
 				// if nakapili ng song through search
-	            else if(1 <= songChoice && songChoice <= resultSize)
+	            else if(1 <= songChoice && songChoice <= resultSize && isSong)
 	            {
 	            	System.out.println("= - - - - - - - - - - - - - - - - - - - - - - - - - - =\n");
 	            	
 	            	do
 	            	{
-		            	System.out.println(" - {SONG STATUS}");
+		            	System.out.println(" - {" + mediaType.toUpperCase() + " STATUS}");
 		            	System.out.println(" - [1] Completed");
 		            	System.out.println(" - [2] In Progress");
 		            	System.out.println(" - [3] Planned");
@@ -1378,7 +1490,7 @@ public class Main {
 		            	        		review = "";
 		            	        		
 			            	        	System.out.println(" - ");
-			            	        	System.out.println(" - {REVIEW SONG?}");
+			            	        	System.out.println(" - {REVIEW " + mediaType.toUpperCase() + "?}");
 			            	        	System.out.println(" - [1] Yes");
 			            	        	System.out.println(" - [2] No");
 			            	        	System.out.print(" - Enter your choice: ");
@@ -1422,115 +1534,10 @@ public class Main {
 		            	}
 	            	} while(!choice5.equals("1") && !choice5.equals("2") && !choice5.equals("3"));
 	            	
-					// OVERWRITE LOGIC
-					// if u add same song but different review
-					// can choose if u overwrite
 	            	Song songTemp = results.get(songChoice-1);
-	            	System.out.println("@@@ " + status.toDbString());
-	            	System.out.println("@@@ " + rating);
-	            	System.out.println("@@@ " + review);
-	            	Song newSong = new Song(songTemp.getTitle(), songTemp.getCreator(), songTemp.getYearReleased(), status, rating, review, songTemp.getAlbum(), songTemp.getRuntimeSeconds());
+	            	Song newSong = new Song(songTemp.getTitle(), status, rating, songTemp.getAlbum(), songTemp.getCreator(), songTemp.getYearReleased(), songTemp.getRuntimeSeconds(), review);
 	            	
-	            	try {
-						// add now, edit more features later e.g. review, status
-	            		 songId = mediaDAO.addMedia(newSong);
-						 // check if song already exists???
-	            		 Song oldSong = mediaDAO.getSongOfUserById(songId);
-	            		
-						 // if inside a playlist, add song to that playlist and all_songs
-						 // otherwise, add to all_songs only
-	            		 if (triggerValue == 5)
-	            		 {
-            		        if ( oldSong != null && oldSong.getStatus() != null && (!oldSong.getReview().equals(review) || oldSong.getUserRating() != rating || !oldSong.getStatus().toDbString().equals(status.toDbString())) )
-            		        {
-            		            do
-            		            {
-            		                System.out.println(" - ");
-            		                System.out.println(" - Would you like to overwrite your previous status/rating/review?");
-            		                System.out.println(" - {STATUS}");
-            		                System.out.println(" - Previous: " + oldSong.getStatus().toDbString());
-            		                System.out.println(" - New: " + status.toDbString());
-            		                System.out.println(" - {RATING}");
-            		                
-            		                if(oldSong.getUserRating() == 0.0)
-            		                	System.out.println(" - Previous: /-complete to rate-/");
-            		                else
-            		                	System.out.println(" - Previous: " + oldSong.getUserRating());
-            		                
-            		                if(rating == 0.0)
-            		                	System.out.println(" - New: /-complete to rate-/");
-            		                else
-            		                	System.out.println(" - New: " + rating);
-            		                
-            		                System.out.println(" - {REVIEW}");
-            		                
-            		                if(oldSong.getReview().equals(""))
-            		                {
-            		                	if(!oldSong.getStatus().toDbString().equals("completed"))
-            		                		System.out.println(" - Previous: /-complete to review-/");
-            		                	else
-            		                		System.out.println(" - Previous: /-unreviewed-/");
-            		                }
-            		                else
-            		                	System.out.println(" - Previous: \"" + oldSong.getReview() + "\"");
-            		                
-            		                if(review.equals(""))
-            		                {
-            		                	if(!status.toDbString().equals("completed"))
-            		                		System.out.println(" - New: /-complete to review-/");
-            		                	else
-            		                		System.out.println(" - New: /-unreviewed-/");
-            		                }
-            		                else
-            		                	System.out.println(" - New: \"" + review + "\"");
-            		                
-            		                System.out.println(" - ");
-            		                System.out.println(" - [1] Yes");
-            		                System.out.println(" - [2] No");
-            		                System.out.print(" - Enter your choice: ");
-
-            		                choice2 = scanner.nextLine();
-
-									// if user wants to overwrite???
-            		                if (choice2.equals("1"))
-            		                {
-            		                    mediaPlaylistDAO.addMediaToPlaylist(playlistId, mediaDAO.findMediaId(newSong), "Song");
-            		                    mediaPlaylistDAO.updateAllPlaylists(newSong);
-            		                }
-									// dont overwrite
-            		                else if (choice2.equals("2"))
-            		                {
-            		                    mediaPlaylistDAO.addMediaToPlaylist(playlistId, songId, "Song");
-            		                }
-            		                else
-            		                {
-            		                    System.out.println(" - Invalid input! Please try again.");
-            		                }
-
-            		            } while (!choice2.equals("1") && !choice2.equals("2"));
-            		        }
-							// without overwrite logic, add normally
-            		        else
-            		        {
-            		        	mediaPlaylistDAO.addMediaToPlaylist(playlistId, songId, "Song");
-            		        	mediaPlaylistDAO.updateAllPlaylists(newSong);
-            		        }
-
-            		        System.out.println(" - ");
-            		        System.out.println(" - " + songTemp.getTitle() + " by " + songTemp.getCreator() + " added to songs successfully!");
-            		        System.out.println(" - " + songTemp.getTitle() + " by " + songTemp.getCreator() + " added to playlist successfully!");
-            		    }
-						// add song to all_songs
-            		    else
-            		    {
-            		        System.out.println(" - ");
-            		        System.out.println(" - " + songTemp.getTitle() + " by " + songTemp.getCreator() + " added successfully!");
-            		        
-            		        mediaPlaylistDAO.updateAllPlaylists(newSong);
-            		    }
-	            	}
-	            	catch (SQLException e) {
-	            	}
+					doMediaOverwrite(playlistId, newSong, scanner, triggerValue, mediaType);
 	            	
 	            	choice3 = "<";
 	            }
@@ -1548,6 +1555,351 @@ public class Main {
 		}
     	
         System.out.println();
-        
+	}
+	
+	public static void doMediaOverwrite(int playlistId, Media newMedia, Scanner scanner, int triggerValue, String mediaType) {
+		
+		int mediaId;
+		String choice2;
+		boolean alreadyExists;
+		Media oldMedia = null;
+		
+		// OVERWRITE LOGIC
+		// if u add same song but different review
+		// can choose if u overwrite
+		
+    	try {
+    		mediaId = mediaDAO.findMediaId(newMedia);
+    		
+    		if(mediaId != -1)
+    		{
+	    		if(mediaType.equalsIgnoreCase("song"))
+	    			oldMedia = mediaDAO.getSongOfUserById(mediaId);
+	    		else if(mediaType.equalsIgnoreCase("game"))
+	    			oldMedia = mediaDAO.getGameOfUserById(mediaId);
+	    		else if(mediaType.equalsIgnoreCase("show"))
+	    			oldMedia = mediaDAO.getShowOfUserById(mediaId);
+    		}
+    		
+    		alreadyExists = (oldMedia != null);
+    		
+    		if(!alreadyExists)
+    		{
+    			mediaId = mediaDAO.addMedia(newMedia);
+    		}
+    		
+    		if ( alreadyExists && (!oldMedia.getReview().equals(newMedia.getReview()) || oldMedia.getUserRating() != newMedia.getUserRating() || !oldMedia.getStatus().toDbString().equals(newMedia.getStatus().toDbString())) )
+	        {
+	            do
+	            {
+	                System.out.println(" - ");
+	                System.out.println(" - Would you like to overwrite your previous status/rating/review?");
+	                System.out.println(" - {STATUS}");
+	                System.out.println(" - Previous: " + oldMedia.getStatus().toDbString());
+	                System.out.println(" - New: " + newMedia.getStatus().toDbString());
+	                System.out.println(" - {RATING}");
+	                
+	                if(oldMedia.getUserRating() == 0.0)
+	                	System.out.println(" - Previous: /-complete to rate-/");
+	                else
+	                	System.out.println(" - Previous: " + oldMedia.getUserRating());
+	                
+	                if(newMedia.getUserRating() == 0.0)
+	                	System.out.println(" - New: /-complete to rate-/");
+	                else
+	                	System.out.println(" - New: " + newMedia.getUserRating());
+	                
+	                System.out.println(" - {REVIEW}");
+	                
+	                if(oldMedia.getReview().equals(""))
+	                {
+	                	if(!oldMedia.getStatus().toDbString().equals("completed"))
+	                		System.out.println(" - Previous: /-complete to review-/");
+	                	else
+	                		System.out.println(" - Previous: /-unreviewed-/");
+	                }
+	                else
+	                	System.out.println(" - Previous: \"" + oldMedia.getReview() + "\"");
+	                
+	                if(newMedia.getReview().equals(""))
+	                {
+	                	if(!oldMedia.getStatus().toDbString().equals("completed"))
+	                		System.out.println(" - New: /-complete to review-/");
+	                	else
+	                		System.out.println(" - New: /-unreviewed-/");
+	                }
+	                else
+	                	System.out.println(" - New: \"" + newMedia.getReview() + "\"");
+	                
+	                System.out.println(" - ");
+	                System.out.println(" - [1] Yes");
+	                System.out.println(" - [2] No");
+	                System.out.print(" - Enter your choice: ");
+
+	                choice2 = scanner.nextLine();
+
+	                if (choice2.equals("1"))
+	                {
+	                	if(triggerValue == 5)
+	                	{
+	                		
+		                    mediaPlaylistDAO.addMediaToPlaylist(
+		                        playlistId,
+		                        mediaId,
+		                        newMedia.getStatus(),
+		                        newMedia.getUserRating(),
+		                        newMedia.getReview(),
+		                        mediaType
+		                    );
+	                	}
+	                    
+	                    mediaPlaylistDAO.updateAllPlaylists(newMedia);
+	                }
+	                else if (choice2.equals("2"))
+	                {
+	                    mediaPlaylistDAO.addMediaToPlaylist(
+	                        playlistId,
+	                        mediaId,
+	                        oldMedia.getStatus(),
+	                        oldMedia.getUserRating(),
+	                        oldMedia.getReview(),
+	                        mediaType
+	                    );
+	                }
+	                else
+	                {
+	                    System.out.println(" - Invalid input! Please try again.");
+	                }
+
+	            } while (!choice2.equals("1") && !choice2.equals("2"));
+	        }
+	        else
+	        {
+	        	if(triggerValue == 5)
+	        	{
+		            mediaPlaylistDAO.addMediaToPlaylist(
+		                playlistId,
+		                mediaId,
+		                newMedia.getStatus(),
+                        newMedia.getUserRating(),
+                        newMedia.getReview(),
+                        mediaType
+		            );
+	        	}
+	        }
+
+	        System.out.println(" - ");
+	        System.out.println(" - " + newMedia.getTitle() + " by " + newMedia.getCreator() + " added to " + mediaType.toLowerCase() + "s successfully!");
+	        if(triggerValue == 5)
+	        	System.out.println(" - " + newMedia.getTitle() + " by " + newMedia.getCreator() + " added to playlist successfully!");
+    	}	 
+    	catch (SQLException e) {
+    		e.printStackTrace();
+    		System.out.println(" - SQL ERROR: " + e.getMessage());
+    	}
+	}
+	
+	public static void manuallyAddMedia(String mediaType, int playlistId, int triggerValue) {
+		
+		Status status = Status.PLANNED;
+		double rating = 0.0;
+		String title = "", album = "", artist = "", director = "", developer = "", review = "", genre = "", airing = "", choice4, choice6;
+		int yearReleased = 0, yearStart = 0, yearEnd = 0, runtimeSeconds = 0, numOfSeasons = 0, avgPlaytimeMins = 0;
+		boolean integerLoop = false, isAiring = true;
+		Media newMedia = null;
+		
+		do
+    	{
+			do
+			{
+				integerLoop = false;
+				
+				try {
+					if(mediaType.equalsIgnoreCase("song"))
+					{
+			        	System.out.print(" Enter Song Title: ");
+			        	title = scanner.nextLine();
+			        	System.out.print(" Enter Artist's Name: ");
+			        	artist = scanner.nextLine();
+			        	System.out.print(" Enter Year Released: ");
+			        	yearReleased = Integer.parseInt(scanner.nextLine());
+			        	
+			        	if(yearReleased <= 0)
+			        		integerLoop = true;
+			        	
+			        	System.out.print(" Enter Album Title: ");
+			        	album = scanner.nextLine();
+			        	System.out.print(" Enter Runtime in Seconds: ");
+			        	runtimeSeconds = Integer.parseInt(scanner.nextLine());
+			        	
+			        	if(runtimeSeconds <= 0)
+			        		integerLoop = true;
+					}
+					else if(mediaType.equalsIgnoreCase("game"))
+					{
+						System.out.print(" Enter Game Title: ");
+			        	title = scanner.nextLine();
+			        	System.out.print(" Enter Developer's Name: ");
+			        	developer = scanner.nextLine();
+			        	System.out.print(" Enter Year Released: ");
+			        	yearReleased = Integer.parseInt(scanner.nextLine());
+			        	
+			        	if(yearReleased <= 0)
+			        		integerLoop = true;
+			        	
+			        	System.out.print(" Enter Genre: ");
+			        	genre = scanner.nextLine();
+			        	System.out.print(" Enter Average Playtime in Minutes: ");
+			        	avgPlaytimeMins = Integer.parseInt(scanner.nextLine());
+			        	
+					}
+					else if(mediaType.equalsIgnoreCase("show"))
+					{
+						System.out.print(" Enter Show Title: ");
+			        	title = scanner.nextLine();
+			        	System.out.print(" Enter Director's Name: ");
+			        	director = scanner.nextLine();
+			        	do
+			        	{
+				        	System.out.print(" Still Airing? [Y/N]: ");
+				        	airing = scanner.nextLine();
+				        	
+				        	if(airing.equals("Y"))
+				        	{
+				        		isAiring = true;
+				        	}
+				        	else if(airing.equals("N"))
+				        	{
+				        		isAiring = false;
+				        	}
+				        	else
+				        	{
+				        		System.out.println(" ");
+				        		System.out.println(" Invalid input! Please try again.");
+				        	}
+				        	
+			        	} while(!airing.equals("Y") && !airing.equals("N"));
+			        	
+			        	System.out.print(" Enter Year Started: ");
+			        	yearStart = Integer.parseInt(scanner.nextLine());
+			        	
+			        	if(yearStart <= 0)
+			        		integerLoop = true;
+			        	
+			        	if(airing.equals("N"))
+			        	{
+				        	System.out.print(" Enter Year Ended: ");
+				        	yearEnd = Integer.parseInt(scanner.nextLine());
+				        	
+				        	if(yearEnd <= 0)
+				        		integerLoop = true;
+			        	}
+			        	
+			        	System.out.print(" Enter Genre: ");
+			        	genre = scanner.nextLine();
+			        	System.out.print(" Enter Number of Seasons: ");
+			        	numOfSeasons = Integer.parseInt(scanner.nextLine());
+			        	
+			        	if(numOfSeasons <= 0)
+			        		integerLoop = true;
+					}
+		        	
+		        	System.out.println();
+				}
+				catch(NumberFormatException e) {
+					integerLoop = true;
+					System.out.println(" Invalid input/s in integer-type fields.\n");
+				}
+			} while(integerLoop);
+        	
+        	do
+        	{
+            	System.out.println(" - {" + mediaType.toUpperCase() + " STATUS}");
+            	System.out.println(" - [1] Completed");
+            	System.out.println(" - [2] In Progress");
+            	System.out.println(" - [3] Planned");
+            	System.out.println(" - [X] Redo Manual Add");
+            	System.out.println(" - ");
+            	System.out.print(" - Input Status: ");
+            	choice4 = scanner.nextLine();
+            	
+            	if(choice4.equals("1"))
+            	{
+            		System.out.print(" - Input Personal Rating: ");
+            		
+            		try {
+            	        rating = Double.parseDouble(scanner.nextLine());
+
+            	        if (rating < 1 || rating > 10) {
+            	        	System.out.println(" Rating must be between 1 and 10.\n");
+            	        	choice4 = "WRONG";
+            	        }
+            	        else
+            	        {
+            	        	status = Status.COMPLETED;
+            	        	
+            	        	do
+            	        	{
+            	        		review = "";
+            	        		
+	            	        	System.out.println(" - ");
+	            	        	System.out.println(" - {REVIEW " + mediaType.toUpperCase()+ "?}");
+	            	        	System.out.println(" - [1] Yes");
+	            	        	System.out.println(" - [2] No");
+	            	        	System.out.print(" - Enter your choice: ");
+	            	        	choice6 = scanner.nextLine();
+	            	        	
+	            	        	if(choice6.equals("1"))
+	            	        	{
+	            	        		System.out.println(" - ");
+	            	        		System.out.print(" - Enter Review: ");
+	            	        		review = scanner.nextLine();
+	            	        	}
+	            	        	else if(choice6.equals("2"))
+	            	        	{
+	            	        		review = "";
+	            	        	}
+	            	        	else
+	            	        	{
+	            	        		System.out.println(" - ");
+	            	        		System.out.println(" - Invalid input. Please try again.");
+	            	        	}
+	            	        	
+            	        	} while(!choice6.equals("1") && !choice6.equals("2"));
+            	        }
+            	    }
+            		catch (NumberFormatException e) {
+            	        System.out.println(" Please enter a valid number.\n");
+            	        choice4 = "WRONG";
+            	    }
+            	}
+            	else if(choice4.equals("2"))
+            	{
+            		status = Status.IN_PROGRESS;
+            	}
+            	else if(choice4.equals("3"))
+            	{
+            		status = Status.PLANNED;
+            	}
+            	else if(choice4.equals("X"))
+            	{
+            		System.out.println();
+            	}
+            	else
+            	{
+            		System.out.println(" Invalid input! Please try again.\n");
+            	}
+        	} while(!choice4.equals("1") && !choice4.equals("2") && !choice4.equals("3"));
+        	
+    	} while(choice4.equals("X") && !choice4.equals("1") && !choice4.equals("2") && !choice4.equals("3"));
+    	
+		if(mediaType.equalsIgnoreCase("song"))
+    		newMedia = new Song(title, status, rating, album, artist, yearReleased, runtimeSeconds, review);
+		if(mediaType.equalsIgnoreCase("game"))
+    		newMedia = new Game(title, developer, yearReleased, status, rating, review, genre, avgPlaytimeMins);
+		if(mediaType.equalsIgnoreCase("show"))
+    		newMedia = new Show(title, director, yearStart, yearEnd, status, rating, review, genre, numOfSeasons, isAiring);
+    	
+		doMediaOverwrite(playlistId, newMedia, scanner, triggerValue, mediaType);
 	}
 }

@@ -11,7 +11,7 @@ public class SongPlaylist extends MediaPlaylist{
 	
 	// constructor
 	public SongPlaylist(String title, List<Song> songs, int playlistId) {
-		super();
+		super(title, songs, playlistId);
 		this.title = title;
 		this.songs = songs;
 		this.playlistId = playlistId;
