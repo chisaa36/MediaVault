@@ -15,16 +15,43 @@ import application.model.Song;
 import application.model.Status;
 import application.model.Type;
 
+
+/**
+ * Data Access Object implementation that handles common database operations
+ * for different media types, including songs, games, and shows.
+ *
+ * <p>This class performs operations for the currently logged-in user using
+ * the provided database connection and user ID.</p>
+ */
 public class MediaDAOImpl{
 	
 	Connection conn;
 	int userId;
 
+    /**
+     * Constructs a MediaDAOImpl object for a specific user.
+     *
+     * @param conn the active database connection
+     * @param userId the ID of the currently logged-in user
+     */
 	public MediaDAOImpl(Connection conn, int userId) {
 		this.conn = conn;
 		this.userId = userId;
 	}
 	
+    /**
+     * Checks whether a media item already exists in its corresponding
+     * database table.
+     *
+     * <p>The method determines the appropriate table based on whether the
+     * provided media object is a Song, Game, or Show. It then searches for
+     * an existing record with the same title and creator.</p>
+     *
+     * @param media the media item to search for
+     * @return {@code true} if the media exists in the database;
+     *         {@code false} otherwise
+     * @throws SQLException if an error occurs while accessing the database
+     */
 	public boolean hasMedia(Media media) throws SQLException {
 		
 		boolean answer = true;
@@ -62,8 +89,25 @@ public class MediaDAOImpl{
 	    return answer;
 	}
 	
+	/**
+	 * Adds a media item to the database and associates it with the current user.
+	 *
+	 * <p>If the media does not already exist, it is first inserted into the
+	 * appropriate media table (songs, games, or shows), followed by its
+	 * type-specific information. The media is then added to the user's
+	 * default "all media" playlist and a corresponding review record is
+	 * created if one does not already exist.</p>
+	 *
+	 * @param media the media item to be added
+	 * @return the database ID of the media item
+	 * @throws SQLException if a database error occurs
+	 */
 	public int addMedia(Media media) throws SQLException {
+		
+		// Stores the ID of the media after it is found or inserted.
 	    int mediaId = -1;
+	    
+	    // Database table names used depending on the media type.
 	    String table = "";
 	    String playlistTable = "";
 	    String junctionTable = "";
@@ -219,10 +263,23 @@ public class MediaDAOImpl{
 	    return mediaId;
 	}
 	
+	
+	/**
+	 * Retrieves all songs belonging to the current user's default
+	 * "all_songs" playlist.
+	 *
+	 * <p>Each song is reconstructed as a Song object together with its
+	 * review information such as status, personal rating, and review.</p>
+	 *
+	 * @return a list containing all songs owned by the current user
+	 * @throws SQLException if a database error occurs
+	 */
 	public List<Song> getSongsByUser() throws SQLException {
-
+		
+		// Stores all retrieved songs.
 	    List<Song> songs = new ArrayList<>();
-
+	    
+	    // Retrieve each song together with its review information.
 	    String sql =
 	            "SELECT m.id, m.title, m.creator, m.year, mr.status, mr.user_rating, mr.review, "
 	            + "m.album, m.runtime_seconds "
@@ -263,10 +320,20 @@ public class MediaDAOImpl{
 	    return songs;
 	}
 	
+	
+	/**
+	 * Retrieves all games belonging to the current user's default
+	 * "all_games" playlist.
+	 *
+	 * @return a list of the user's games
+	 * @throws SQLException if a database error occurs
+	 */
 	public List<Game> getGamesByUser() throws SQLException {
 
-		 List<Game> games = new ArrayList<>();
+		// Stores all retrieved games.
+		List<Game> games = new ArrayList<>();
 
+		// Retrieve game information together with the user's review.
 	    String sql =
 	            "SELECT m.id, m.title, m.creator, m.year, mr.status, mr.user_rating, mr.review, m.genre, "
 	            + "m.avg_playtime_mins "
@@ -307,10 +374,19 @@ public class MediaDAOImpl{
 	    return games;
 	}
 	
+	/**
+	 * Retrieves all shows belonging to the current user's default
+	 * "all_shows" playlist.
+	 *
+	 * @return a list of the user's shows
+	 * @throws SQLException if a database error occurs
+	 */
 	public List<Show> getShowsByUser() throws SQLException {
 
+		// Stores all retrieved shows.
 	    List<Show> shows = new ArrayList<>();
-
+	    
+	    // Retrieve each show together with its review information.
 	    String sql =
 	            "SELECT m.id, m.title, m.creator, m.year_start, m.year_end, m.genre, mr.status, mr.user_rating, mr.review, "
 	            + "m.num_of_seasons, m.num_of_episodes, m.avg_mins_per_ep, m.airing "
@@ -352,61 +428,229 @@ public class MediaDAOImpl{
 
 	    return shows;
 	}
-
-	public Media getMediaOfUserById(int mediaId, Type type) throws SQLException {
-		
-		if(type == Type.SONG)
-		{
-		    String sql = """
-		        SELECT s.id, s.title, s.album, s.creator, s.year, s.runtime_seconds, sr.status, sr.user_rating, sr.review
-		        FROM songs_playlists sp
-		        INNER JOIN songs_playlist_items spi ON sp.id = spi.playlist_id
-		        INNER JOIN songs s ON spi.song_id = s.id
-		        LEFT JOIN songs_reviews sr ON s.id = sr.song_id
-		        WHERE sp.user_id = ? AND s.id = ?
-		        """;
 	
-		    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-		        stmt.setInt(1, userId);
-		        stmt.setInt(2, mediaId);
-		        try (ResultSet rs = stmt.executeQuery()) {
-		            if (rs.next()) {
-		            	Song song = new Song(
-							                rs.getString("title"),
-							                Status.fromDbString(rs.getString("status")),
-							                rs.getDouble("user_rating"),
-							                rs.getString("album"),
-							                rs.getString("creator"),
-							                rs.getInt("year"),
-							                rs.getInt("runtime_seconds"),
-							                rs.getString("review")
-				            );
-		                
-		                
-		                song.setMediaId(rs.getInt("id"));
-		                return song;
-		            }
-		        }
-		    }
-		}
+	
+	/**
+	 * Retrieves a specific media item owned by the current user using its
+	 * database ID and media type.
+	 *
+	 * <p>The returned object contains all media-specific information along
+	 * with the user's review, rating, and status.</p>
+	 *
+	 * @param mediaId the database ID of the media
+	 * @param type the type of media to retrieve
+	 * @return the corresponding Media object if found; otherwise {@code null}
+	 * @throws SQLException if a database error occurs
+	 */
+	public Media getMediaOfUserById(int mediaId, Type type) throws SQLException {
+
+	    if (type == Type.SONG)
+	    {
+	        // Retrieve the requested song together with its review information.
+	        String sql = """
+	            SELECT s.id, s.title, s.album, s.creator, s.year, s.runtime_seconds,
+	                   sr.status, sr.user_rating, sr.review
+	            FROM songs_playlists sp
+	            INNER JOIN songs_playlist_items spi ON sp.id = spi.playlist_id
+	            INNER JOIN songs s ON spi.song_id = s.id
+	            LEFT JOIN songs_reviews sr
+	                ON s.id = sr.song_id AND sr.user_id = sp.user_id
+	            WHERE sp.user_id = ? AND s.id = ?
+	            """;
+
+	        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	            stmt.setInt(1, userId);
+	            stmt.setInt(2, mediaId);
+
+	            try (ResultSet rs = stmt.executeQuery()) {
+
+	                // Construct and return the Song if a matching record exists.
+	                if (rs.next()) {
+
+	                    String statusString = rs.getString("status");
+	                    Status status = statusString == null
+	                            ? Status.PLANNED
+	                            : Status.fromDbString(statusString);
+
+	                    String review = rs.getString("review");
+	                    if (review == null)
+	                        review = "";
+
+	                    Song song = new Song(
+	                            rs.getString("title"),
+	                            status,
+	                            rs.getDouble("user_rating"),
+	                            rs.getString("album"),
+	                            rs.getString("creator"),
+	                            rs.getInt("year"),
+	                            rs.getInt("runtime_seconds"),
+	                            review
+	                    );
+
+	                    song.setMediaId(rs.getInt("id"));
+	                    return song;
+	                }
+	            }
+	        }
+	    }
+	    else if (type == Type.GAME)
+	    {
+	        // Retrieve the requested game together with its review information.
+	        String sql = """
+	            SELECT g.id, g.title, g.creator, g.year, g.genre,
+	                   g.avg_playtime_mins, gr.status, gr.user_rating, gr.review
+	            FROM games_playlists gp
+	            INNER JOIN games_playlist_items gpi ON gp.id = gpi.playlist_id
+	            INNER JOIN games g ON gpi.game_id = g.id
+	            LEFT JOIN games_reviews gr
+	                ON g.id = gr.game_id AND gr.user_id = gp.user_id
+	            WHERE gp.user_id = ? AND g.id = ?
+	            """;
+
+	        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	            stmt.setInt(1, userId);
+	            stmt.setInt(2, mediaId);
+
+	            try (ResultSet rs = stmt.executeQuery()) {
+
+	                // Construct and return the Game if a matching record exists.
+	                if (rs.next()) {
+
+	                    String statusString = rs.getString("status");
+	                    Status status = statusString == null
+	                            ? Status.PLANNED
+	                            : Status.fromDbString(statusString);
+
+	                    String review = rs.getString("review");
+	                    if (review == null)
+	                        review = "";
+
+	                    Game game = new Game(
+	                            rs.getString("title"),
+	                            rs.getString("creator"),
+	                            rs.getInt("year"),
+	                            status,
+	                            rs.getDouble("user_rating"),
+	                            review,
+	                            rs.getString("genre"),
+	                            rs.getInt("avg_playtime_mins")
+	                    );
+
+	                    game.setMediaId(rs.getInt("id"));
+	                    return game;
+	                }
+	            }
+	        }
+	    }
+	    else if (type == Type.SHOW)
+	    {
+	        // Retrieve the requested show together with its review information.
+	        String sql = """
+	            SELECT s.id, s.title, s.creator, s.year_start, s.year_end,
+	                   s.genre, s.num_of_seasons, s.airing,
+	                   sr.status, sr.user_rating, sr.review
+	            FROM shows_playlists sp
+	            INNER JOIN shows_playlist_items spi ON sp.id = spi.playlist_id
+	            INNER JOIN shows s ON spi.show_id = s.id
+	            LEFT JOIN shows_reviews sr
+	                ON s.id = sr.show_id AND sr.user_id = sp.user_id
+	            WHERE sp.user_id = ? AND s.id = ?
+	            """;
+
+	        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	            stmt.setInt(1, userId);
+	            stmt.setInt(2, mediaId);
+
+	            try (ResultSet rs = stmt.executeQuery()) {
+
+	                // Construct and return the Show if a matching record exists.
+	                if (rs.next()) {
+
+	                    String statusString = rs.getString("status");
+	                    Status status = statusString == null
+	                            ? Status.PLANNED
+	                            : Status.fromDbString(statusString);
+
+	                    String review = rs.getString("review");
+	                    if (review == null)
+	                        review = "";
+
+	                    Show show = new Show(
+	                            rs.getString("title"),
+	                            rs.getString("creator"),
+	                            rs.getInt("year_start"),
+	                            rs.getInt("year_end"),
+	                            status,
+	                            rs.getDouble("user_rating"),
+	                            review,
+	                            rs.getString("genre"),
+	                            rs.getInt("num_of_seasons"),
+	                            rs.getBoolean("airing")
+	                    );
+
+	                    show.setMediaId(rs.getInt("id"));
+	                    return show;
+	                }
+	            }
+	        }
+	    }
+
+	    // No matching media was found.
 	    return null;
 	}
-
+	
+	/**
+	 * Retrieves a song owned by the current user using its database ID.
+	 *
+	 * @param songId the ID of the song
+	 * @return the Song if found; otherwise {@code null}
+	 * @throws SQLException if a database error occurs
+	 */
 	public Song getSongOfUserById(int songId) throws SQLException {
+		
+		// Retrieve the media and safely cast it to Song.
 	    Media media = getMediaOfUserById(songId, Type.SONG);
 	    return media instanceof Song ? (Song) media : null;
 	}
 	
+	/**
+	 * Retrieves a game owned by the current user using its database ID.
+	 *
+	 * @param gameId the ID of the game
+	 * @return the Game if found; otherwise {@code null}
+	 * @throws SQLException if a database error occurs
+	 */
 	public Game getGameOfUserById(int songId) throws SQLException {
-	    Media media = getMediaOfUserById(songId, Type.SONG);
+		
+		// Retrieve the media and safely cast it to Game.
+	    Media media = getMediaOfUserById(songId, Type.GAME);
 	    return media instanceof Game ? (Game) media : null;
 	}
 	
+	/**
+	 * Retrieves a show owned by the current user using its database ID.
+	 *
+	 * @param showId the ID of the show
+	 * @return the Show if found; otherwise {@code null}
+	 * @throws SQLException if a database error occurs
+	 */
 	public Show getShowOfUserById(int songId) throws SQLException {
-	    Media media = getMediaOfUserById(songId, Type.SONG);
+		
+		// Retrieve the media and safely cast it to Show.
+	    Media media = getMediaOfUserById(songId, Type.SHOW);
 	    return media instanceof Show ? (Show) media : null;
 	}
-
+	
+	/**
+	 * Updates the status of a media item for the current user.
+	 *
+	 * @param media the media whose status will be updated
+	 * @param newStatus the new status to assign
+	 * @throws SQLException if a database error occurs
+	 */
 	public void updateMediaStatus(Media media, Status newStatus) throws SQLException {
 		
 		String table = null;
@@ -418,6 +662,7 @@ public class MediaDAOImpl{
 		else if (media instanceof Show)
 			table = "show";
 		
+		// Update the media's status in the corresponding review table.
 		String sql = "UPDATE " + table + "s_reviews "
 				   + "SET status = ? "
 				   + "WHERE user_id = ? AND " + table + "_id = ?";
@@ -429,8 +674,17 @@ public class MediaDAOImpl{
 	        stmt.executeUpdate();
 	    }
 	}
-
+	
+	/**
+	 * Updates the personal rating of a media item for the current user.
+	 *
+	 * @param media the media whose rating will be updated
+	 * @param rating the new rating to assign
+	 * @throws SQLException if a database error occurs
+	 */
 	public void updateMediaRating(Media media, double rating) throws SQLException {
+		
+		// Determine the media type to identify the correct review table.
 		String table = null;
 		
 		if (media instanceof Song)
@@ -440,6 +694,7 @@ public class MediaDAOImpl{
 		else if (media instanceof Show)
 			table = "show";
 		
+		// Update the media's rating in the corresponding review table.
 		String sql = "UPDATE " + table + "s_reviews "
 				   + "SET user_rating = ? "
 				   + "WHERE user_id = ? AND " + table + "_id = ?";
@@ -451,7 +706,14 @@ public class MediaDAOImpl{
 	        stmt.executeUpdate();
 	    }
 	}
-
+	
+	/**
+	 * Updates the personal review of a media item for the current user.
+	 *
+	 * @param media the media whose review will be updated
+	 * @param review the new review text
+	 * @throws SQLException if a database error occurs
+	 */
 	public void updateMediaReview(Media media, String review) throws SQLException {
 		String table = null;
 		
@@ -462,6 +724,7 @@ public class MediaDAOImpl{
 		else if (media instanceof Show)
 			table = "show";
 		
+		// Update the media's review in the corresponding review table.
 		String sql = "UPDATE " + table + "s_reviews "
 				   + "SET review = ? "
 				   + "WHERE user_id = ? AND " + table + "_id = ?";
@@ -473,9 +736,21 @@ public class MediaDAOImpl{
 	        stmt.executeUpdate();
 	    }
 	}
-
+	
+	/**
+	 * Removes a song from all playlists owned by the current user.
+	 *
+	 * <p>This method only removes the association between the user and the
+	 * song. The song itself remains in the database for other users.</p>
+	 *
+	 * @param title the title of the song
+	 * @param creator the creator (artist) of the song
+	 * @return 1 if the song was removed; 0 if the song does not exist
+	 * @throws SQLException if a database error occurs
+	 */
 	public int deleteSong(String title, String creator) throws SQLException {
 
+		// Retrieve the database ID of the specified song.
 	    String findSongSql = "SELECT id FROM songs WHERE title = ? AND creator = ?";
 	    int songId = -1;
 	    try (PreparedStatement stmt = conn.prepareStatement(findSongSql)) {
@@ -487,11 +762,13 @@ public class MediaDAOImpl{
 	            }
 	        }
 	    }
-
+	    
+	    // Return immediately if the song does not exist.
 	    if (songId == -1) {
 	        return 0;
 	    }
-
+	    
+	    // Remove the song from all playlists belonging to the current user.
 	    String deleteItemSql = "DELETE FROM songs_playlist_items WHERE song_id = ? AND playlist_id IN (SELECT id FROM songs_playlists WHERE user_id = ?)";
 	    try (PreparedStatement stmt = conn.prepareStatement(deleteItemSql)) {
 	        stmt.setInt(1, songId);
@@ -502,8 +779,17 @@ public class MediaDAOImpl{
 	    return 1;
 	}
 	
+	/**
+	 * Removes a game from all playlists owned by the current user.
+	 *
+	 * @param title the title of the game
+	 * @param creator the creator (developer) of the game
+	 * @return 1 if the game was removed; 0 if the game does not exist
+	 * @throws SQLException if a database error occurs
+	 */
 	public int deleteGame(String title, String creator) throws SQLException {
-
+		
+		// Retrieve the database ID of the specified game.
 	    String findGameSql = "SELECT id FROM games WHERE title = ? AND creator = ?";
 	    int gameId = -1;
 	    try (PreparedStatement stmt = conn.prepareStatement(findGameSql)) {
@@ -515,11 +801,13 @@ public class MediaDAOImpl{
 	            }
 	        }
 	    }
-
+	    
+	    // Return immediately if the game does not exist.
 	    if (gameId == -1) {
 	        return 0;
 	    }
-
+	    
+	    // Remove the game from all playlists belonging to the current user.
 	    String deleteItemSql = "DELETE FROM games_playlist_items WHERE game_id = ? AND playlist_id IN (SELECT id FROM games_playlists WHERE user_id = ?)";
 	    try (PreparedStatement stmt = conn.prepareStatement(deleteItemSql)) {
 	        stmt.setInt(1, gameId);
@@ -530,8 +818,17 @@ public class MediaDAOImpl{
 	    return 1;
 	}
 	
+	/**
+	 * Removes a show from all playlists owned by the current user.
+	 *
+	 * @param title the title of the show
+	 * @param creator the creator of the show
+	 * @return 1 if the show was removed; 0 if the show does not exist
+	 * @throws SQLException if a database error occurs
+	 */
 	public int deleteShow(String title, String creator) throws SQLException {
-
+		
+		// Retrieve the database ID of the specified show.
 	    String findShowSql = "SELECT id FROM shows WHERE title = ? AND creator = ?";
 	    int showId = -1;
 	    try (PreparedStatement stmt = conn.prepareStatement(findShowSql)) {
@@ -547,7 +844,8 @@ public class MediaDAOImpl{
 	    if (showId == -1) {
 	        return 0;
 	    }
-
+	    
+	 // Remove the show from all playlists belonging to the current user.
 	    String deleteItemSql = "DELETE FROM shows_playlist_items WHERE show_id = ? AND playlist_id IN (SELECT id FROM shows_playlists WHERE user_id = ?)";
 	    try (PreparedStatement stmt = conn.prepareStatement(deleteItemSql)) {
 	        stmt.setInt(1, showId);
@@ -558,7 +856,18 @@ public class MediaDAOImpl{
 	    return 1;
 	}
 	
+	/**
+	 * Retrieves the database ID of a media item based on its title and creator.
+	 *
+	 * <p>The method determines the appropriate media table based on the
+	 * runtime type of the supplied Media object.</p>
+	 *
+	 * @param media the media item to search for
+	 * @return the database ID of the media if found; otherwise {@code -1}
+	 * @throws SQLException if a database error occurs
+	 */
 	public int findMediaId(Media media) throws SQLException {
+		// Determine which media table should be searched.
 		String table = null;
 		
 		if (media instanceof Song)
@@ -568,6 +877,7 @@ public class MediaDAOImpl{
 		else if (media instanceof Show)
 			table = "shows";
 		
+		// Search for the media using its title and creator.
 		String sql = "SELECT id FROM " + table + " WHERE title = ? AND creator = ?";
 		
 		try (PreparedStatement stmt = conn.prepareStatement(sql)) {

@@ -20,6 +20,14 @@ import java.sql.SQLException;
 
 import java.util.Scanner;
 
+
+/**
+ * Main driver class for the Media Vault application.
+ *
+ * <p>This class controls the application's command-line interface, including
+ * user login and registration, media vault navigation, playlist management,
+ * media searching, and media updates.</p>
+ */
 public class Main {
 
 	private static int loggedInUser = -1;
@@ -30,6 +38,17 @@ public class Main {
 	private static MediaPlaylistDAOImpl mediaPlaylistDAO;
 	private static SpotifyClient spotifyClient = new SpotifyClient("266e17b3bb8e432d82b803598192fc5f", "f38ada98c91f4bf9bf6ed4f4490d7b12");
 	
+	
+	/**
+     * Starts the Media Vault application.
+     *
+     * <p>The method connects to the database, initializes the required tables,
+     * and repeatedly displays the login menu. Users may log in, register a new
+     * account, or exit the application.</p>
+     *
+     * @param args command-line arguments supplied to the application
+     * @throws SQLException if a database operation fails
+     */
 	public static void main(String[] args) throws SQLException {
 		
 		int checkCtr = 0;
@@ -37,11 +56,14 @@ public class Main {
 		String username, password, checkPassword, choice;
 		
 		try{
+			// Establish the connection to the SQLite database.
 		    conn = DatabaseConnection.connect();
-
+		    
+		    // Create the required database tables if they do not yet exist.
 		    DatabaseInitializer initializer = new DatabaseInitializer();
 		    initializer.initialize(conn);
-
+		    
+		    // Initialize the DAO responsible for user operations.
 		    userDAO = new UserDAO(conn);
 		    
 		    System.out.println();
@@ -161,6 +183,12 @@ public class Main {
 		}	
 	}
 	
+	/**
+	 * Displays the main vault menu for the currently logged-in user.
+	 *
+	 * <p>Users may access the Song, Game, or Show vaults, view all media in
+	 * their library, or return to the login menu.</p>
+	 */
 	public static void vaultMenu(){
 		
 		List<Media> combined = new ArrayList<>();
@@ -251,6 +279,15 @@ public class Main {
 	}
 	*/
 	
+	/**
+	 * Displays and manages the vault for a specific media type.
+	 *
+	 * <p>This method allows the user to browse their media collection,
+	 * manage playlists, search for new media, and perform operations
+	 * such as viewing, adding, updating, or removing media entries.</p>
+	 *
+	 * @param mediaType the type of media to manage (Song, Game, or Show)
+	 */
 	public static void getMediaVault(String mediaType){
 		
 		int playlistChoice = -1, triggerValue = 0, playlistId = -1;
@@ -478,6 +515,16 @@ public class Main {
 		} while(!choice.equals("<"));
 	}
 	
+	/**
+	 * Shortens a string so that it fits within a specified width.
+	 *
+	 * <p>If the text exceeds the specified width, it is truncated and an
+	 * ellipsis (...) is appended.</p>
+	 *
+	 * @param text the text to format
+	 * @param width the maximum allowed width
+	 * @return the formatted string
+	 */
 	private static String fitToSpace(String text, int width) {
 	    if (text == null) {
 	        return "";
@@ -490,6 +537,17 @@ public class Main {
 	    return text.substring(0, width - 3) + "...";
 	}
 	
+	/**
+	 * Displays a formatted table containing a list of media entries.
+	 *
+	 * <p>The table includes general media information such as title,
+	 * creator, release year, status, rating, review status, and
+	 * media-specific details. When displaying all media types, an
+	 * additional column indicating the media type is shown.</p>
+	 *
+	 * @param mediaList the media entries to display
+	 * @param isAllMedias whether the list contains multiple media types
+	 */
 	public static void printMedia(List<? extends Media> mediaList, boolean isAllMedias) {
 		
 		String mediaType = "";
@@ -526,7 +584,18 @@ public class Main {
 	    System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
 	}
 	
-	// edit a song inside a playlist
+	/**
+	 * Displays and manages media entries based on the selected view or playlist.
+	 *
+	 * <p>This method allows users to browse media by status or playlist,
+	 * view detailed information, update status, rating, and review,
+	 * remove media, or manage playlist contents.</p>
+	 *
+	 * @param playlistChoice the selected playlist number
+	 * @param playlists the list of available playlists
+	 * @param triggerValue determines which view or operation to perform
+	 * @param mediaType the type of media being managed
+	 */
 	public static void updateMedia(int playlistChoice, List<MediaPlaylist> playlists, int triggerValue, String mediaType) {
 
 		boolean allChecker = false;
@@ -1304,8 +1373,19 @@ public class Main {
 								// else, remove from playlist
 	    					    else {
 	    					        int mediaId = mediaDAO.findMediaId(media);
-
-	    					        mediaPlaylistDAO.removeMediaFromPlaylist(mp.getPlaylistId(), mediaId, Type.SONG);
+	    					        
+	    					        if(mediaType.equalsIgnoreCase("song"))
+	    					        {
+	    					        	mediaPlaylistDAO.removeMediaFromPlaylist(mp.getPlaylistId(), mediaId, Type.SONG);
+	    					        }
+	    					        else if(mediaType.equalsIgnoreCase("game"))
+	    					        {
+	    					        	mediaPlaylistDAO.removeMediaFromPlaylist(mp.getPlaylistId(), mediaId, Type.GAME);
+	    					        }
+	    					        else if(mediaType.equalsIgnoreCase("show"))
+	    					        {
+	    					        	mediaPlaylistDAO.removeMediaFromPlaylist(mp.getPlaylistId(), mediaId, Type.SHOW);
+	    					        }
 	    					    }
 	    					}
 	    					
@@ -1381,6 +1461,18 @@ public class Main {
     	} while(!choice7.equals("<"));
 	}
 	
+	/**
+	 * Searches for media and allows the user to add it to their library
+	 * or a playlist.
+	 *
+	 * <p>Song searches are performed using the Spotify Web API, while
+	 * other media types are added manually. Users may also choose to
+	 * manually add songs if they are not available through Spotify.</p>
+	 *
+	 * @param playlistId the destination playlist ID
+	 * @param triggerValue identifies the operation that initiated the search
+	 * @param mediaType the type of media to search for
+	 */
 	public static void doMediaSearch(int playlistId, int triggerValue, String mediaType) {
 		
 		Status status = Status.PLANNED;
@@ -1557,6 +1649,19 @@ public class Main {
         System.out.println();
 	}
 	
+	/**
+	 * Handles the overwrite process for an existing media entry.
+	 *
+	 * <p>If the selected media already exists in the user's library, this
+	 * method prompts the user to confirm whether the existing status,
+	 * personal rating, and review should be replaced with new values.
+	 * When confirmed, the corresponding review information is updated
+	 * in the database.</p>
+	 *
+	 * @param media the existing media item to update
+	 * @param mediaType the type of media being overwritten
+	 * @throws SQLException if a database error occurs while updating the media
+	 */
 	public static void doMediaOverwrite(int playlistId, Media newMedia, Scanner scanner, int triggerValue, String mediaType) {
 		
 		int mediaId;
@@ -1699,6 +1804,18 @@ public class Main {
     	}
 	}
 	
+	/**
+	 * Allows the user to manually add a media item to their library or
+	 * a selected playlist.
+	 *
+	 * <p>The user is prompted to enter the media's information. The media
+	 * is then inserted into the database and optionally added to the
+	 * selected playlist.</p>
+	 *
+	 * @param mediaType the type of media to add
+	 * @param playlistId the destination playlist ID
+	 * @param triggerValue identifies the operation that initiated the add
+	 */
 	public static void manuallyAddMedia(String mediaType, int playlistId, int triggerValue) {
 		
 		Status status = Status.PLANNED;

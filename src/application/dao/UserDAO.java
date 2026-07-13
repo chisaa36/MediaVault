@@ -16,6 +16,17 @@ public class UserDAO {
         this.conn = conn;
     }
 
+	/**
+	 * Verifies a user's login credentials.
+	 *
+	 * @param username the username to check
+	 * @param password the password to check
+	 * @return {@code true} if a user with the given username and password exists;
+	 *         {@code false} otherwise
+	 * @throws SQLException if a database access error occurs
+	 * @pre  {@code username} and {@code password} are non-null
+	 * @post no data is modified
+	 */
     public boolean login(String username, String password) throws SQLException {
 
         String sql = """
@@ -35,6 +46,15 @@ public class UserDAO {
         }
     }
     
+	/**
+	 * Retrieves the ID of the user with the given username.
+	 *
+	 * @param username the username to look up
+	 * @return the user's ID if found; {@code -1} if no such user exists
+	 * @throws SQLException if a database access error occurs
+	 * @pre  {@code username} is non-null
+	 * @post no data is modified
+	 */
     public int getUserID(String username) throws SQLException {
         String sql = "SELECT id FROM users WHERE username = ?";
 
@@ -51,6 +71,15 @@ public class UserDAO {
         return -1;
     }
     
+	/**
+	 * Checks whether a user with the given username exists.
+	 *
+	 * @param username the username to check
+	 * @return {@code true} if the username exists; {@code false} otherwise
+	 * @throws SQLException if a database access error occurs
+	 * @pre  {@code username} is non-null
+	 * @post no data is modified
+	 */
     public boolean usernameExists(String username) throws SQLException {
         String sql = "SELECT 1 FROM users WHERE username = ?";
 
@@ -63,6 +92,19 @@ public class UserDAO {
         }
     }
 
+	/**
+	 * Creates a new user with the given username and password, then registers
+	 * default entries for the new user.
+	 *
+	 * @param username the username for the new user
+	 * @param password the password for the new user
+	 * @throws SQLException if a database access error occurs
+	 * @pre  {@code username} and {@code password} are non-null
+	 * @post if {@code username} is not already taken, a new row is inserted into
+	 *       the users table and {@link DatabaseInitializer#registerUser} is
+	 *       called with the new user's ID; if {@code username} is already taken,
+	 *       no user is created and no registration occurs
+	 */
     public void addUser(String username, String password) throws SQLException {
         int userId = -1;
     	String sql = "INSERT INTO users(username, password) VALUES(?, ?)";
@@ -90,24 +132,5 @@ public class UserDAO {
      	if (userId != -1) {
      		DatabaseInitializer.registerUser(conn, userId);
      	}
-    }
-    
-    public void deleteUser(int id) throws SQLException {
-        String sql = "DELETE FROM users WHERE id = ?";
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
-        }
-    }
-    
-    public void updatePassword(int id, String newPassword) throws SQLException {
-        String sql = "UPDATE users SET password = ? WHERE id = ?";
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, newPassword);
-            ps.setInt(2, id);
-            ps.executeUpdate();
-        }
     }
 }
